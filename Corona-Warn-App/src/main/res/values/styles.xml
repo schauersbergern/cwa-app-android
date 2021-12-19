@@ -1,6 +1,6 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="BaseTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="BaseTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="android:actionOverflowButtonStyle">@style/CWAToolbar.Overflow</item>
         <item name="android:windowLightStatusBar">@bool/lightSystemUI</item>
@@ -19,9 +19,9 @@
 
     <style name="AppTheme" parent="BaseTheme" />
 
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.Material3.Dark.ActionBar" />
 
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.Material3.Light" />
 
     <!-- Launcher theme with background -->
     <style name="AppTheme.Launcher" parent="AppTheme">
@@ -29,7 +29,7 @@
     </style>
 
     <!-- Date Time pickers-->
-    <style name="DatePickerTheme" parent="@style/ThemeOverlay.MaterialComponents.MaterialCalendar">
+    <style name="DatePickerTheme" parent="@style/ThemeOverlay.Material3.MaterialCalendar">
         <item name="colorOnPrimary">@android:color/white</item>
     </style>
 
@@ -39,7 +39,7 @@
     <!-- Main Application -->
     <style name="AppTheme.Main" parent="AppTheme" />
 
-    <style name="CWAToolbar" parent="@style/Widget.MaterialComponents.Toolbar">
+    <style name="CWAToolbar" parent="@style/Widget.Material3.Toolbar">
         <item name="colorPrimary">@color/colorSurface1</item>
         <item name="android:background">@color/colorSurface1</item>
         <item name="android:textColor">@color/colorOnPrimary</item>
@@ -67,7 +67,7 @@
         <item name="android:background">@color/colorTransparent</item>
     </style>
 
-    <style name="BottomNavigationViewStyle" parent="Widget.MaterialComponents.BottomNavigationView">
+    <style name="BottomNavigationViewStyle" parent="Widget.Material3.BottomNavigationView">
         <item name="labelVisibilityMode">labeled</item>
         <item name="itemTextColor">@color/nav_item_color</item>
         <item name="itemIconTint">@color/nav_item_color</item>
@@ -106,7 +106,7 @@
         <item name="android:textColor">@color/button_text_color_emphasized</item>
     </style>
 
-    <style name="contactDiaryPersonButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+    <style name="contactDiaryPersonButton" parent="Widget.Material3.Button.OutlinedButton">
         <item name="strokeColor">@color/button_contact_diary_person</item>
         <item name="strokeWidth">2dp</item>
         <item name="android:letterSpacing">0</item>
@@ -116,7 +116,7 @@
         <item name="android:textColor">@color/colorOnPrimary</item>
     </style>
 
-    <style name="certificateSelectionToggleButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+    <style name="certificateSelectionToggleButton" parent="Widget.Material3.Button.OutlinedButton">
         <item name="strokeColor">@color/certificate_selector_button_stroke</item>
         <item name="strokeWidth">2dp</item>
         <item name="android:letterSpacing">0</item>
@@ -144,7 +144,7 @@
         <item name="android:textColor">@color/colorPrimary</item>
     </style>
 
-    <style name="materialTextButton" parent="Widget.MaterialComponents.Button.TextButton">
+    <style name="materialTextButton" parent="Widget.Material3.Button.TextButton">
         <item name="android:textColor">@color/colorPrimary</item>
     </style>
 

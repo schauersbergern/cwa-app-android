@@ -24,11 +24,13 @@
         android:touchscreenBlocksFocus="false"
         app:contentInsetStart="0dp"
         app:contentInsetStartWithNavigation="0dp"
-        app:fabAlignmentMode="center">
+        app:fabAlignmentMode="center"
+        app:fabCradleMargin="0dp">
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/main_bottom_navigation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
             android:focusable="true"
             android:touchscreenBlocksFocus="false"
             android:outlineAmbientShadowColor="@android:color/transparent"
@@ -41,11 +43,12 @@
         android:id="@+id/scanner_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center"
+        android:layout_marginBottom="32dp"
         android:contentDescription="@string/bottom_nav_scanner_title"
         app:backgroundTint="@color/fab_tint"
         app:elevation="2dp"
-        android:layout_marginBottom="32dp"
-        android:layout_gravity="bottom|center"
+        app:layout_anchor="@id/bottom_app_bar"
         app:srcCompat="@drawable/ic_nav_qrcode"
         app:tint="@android:color/white" />
 
