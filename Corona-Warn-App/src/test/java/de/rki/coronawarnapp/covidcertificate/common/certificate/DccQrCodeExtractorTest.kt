@@ -28,6 +28,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import okio.internal.commonAsUtf8ToByteArray
 import org.joda.time.Instant
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import testhelpers.BaseTest
 import javax.inject.Inject
@@ -44,16 +45,19 @@ class DccQrCodeExtractorTest : BaseTest() {
         DaggerCovidCertificateTestComponent.factory().create().inject(this)
     }
 
+    @RepeatedTest(times)
     @Test
     fun `happy path extraction`() = runBlockingTest {
         extractor.extract(VaccinationQrCodeTestData.validVaccinationQrCode, parserMode = Mode.CERT_VAC_STRICT)
     }
 
+    @RepeatedTest(times)
     @Test
     fun `happy path extraction 2`() = runBlockingTest {
         extractor.extract(VaccinationQrCodeTestData.validVaccinationQrCode2)
     }
 
+    @RepeatedTest(times)
     @Test
     fun `happy path extraction with data`() = runBlockingTest {
         val qrCode = extractor.extract(
@@ -93,6 +97,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `happy path extraction 4`() = runBlockingTest {
         extractor.extract(
@@ -101,6 +106,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         )
     }
 
+    @RepeatedTest(times)
     @Test
     fun `valid encoding but not a health certificate fails with HC_CWT_NO_ISS`() = runBlockingTest {
         shouldThrow<InvalidHealthCertificateException> {
@@ -111,6 +117,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe HC_CWT_NO_ISS
     }
 
+    @RepeatedTest(times)
     @Test
     fun `random string fails with HC_BASE45_DECODING_FAILED`() = runBlockingTest {
         shouldThrow<InvalidVaccinationCertificateException> {
@@ -121,6 +128,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe HC_BASE45_DECODING_FAILED
     }
 
+    @RepeatedTest(times)
     @Test
     fun `uncompressed base45 string fails with HC_ZLIB_DECOMPRESSION_FAILED`() = runBlockingTest {
         shouldThrow<InvalidVaccinationCertificateException> {
@@ -131,6 +139,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe HC_ZLIB_DECOMPRESSION_FAILED
     }
 
+    @RepeatedTest(times)
     @Test
     fun `vaccination certificate missing fails with VC_NO_VACCINATION_ENTRY`() = runBlockingTest {
         shouldThrow<InvalidVaccinationCertificateException> {
@@ -141,6 +150,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe NO_VACCINATION_ENTRY
     }
 
+    @RepeatedTest(times)
     @Test
     fun `test data person A check`() = runBlockingTest {
         val extracted = extractor.extract(
@@ -150,6 +160,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         extracted shouldBe vaccinationTestData.personAVac1QRCode
     }
 
+    @RepeatedTest(times)
     @Test
     fun `test data person B check`() = runBlockingTest {
         val extracted = extractor.extract(
@@ -159,6 +170,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         extracted shouldBe vaccinationTestData.personBVac1QRCode
     }
 
+    @RepeatedTest(times)
     @Test
     fun `null values fail with JSON_SCHEMA_INVALID`() = runBlockingTest {
         shouldThrow<InvalidVaccinationCertificateException> {
@@ -169,6 +181,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe InvalidHealthCertificateException.ErrorCode.HC_JSON_SCHEMA_INVALID
     }
 
+    @RepeatedTest(times)
     @Test
     fun `blank name passes`() = runBlockingTest {
         extractor.extract(
@@ -177,6 +190,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         )
     }
 
+    @RepeatedTest(times)
     @Test
     fun `Bulgarian qr code passes`() = runBlockingTest {
         val qrCode = extractor.extract(
@@ -215,6 +229,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `Swedish qr code passes`() = runBlockingTest {
         extractor.extract(
@@ -223,6 +238,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         )
     }
 
+    @RepeatedTest(times)
     @Test
     fun `Polish qr code passes`() = runBlockingTest {
         extractor.extract(
@@ -231,6 +247,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         )
     }
 
+    @RepeatedTest(times)
     @Test
     fun `fail vaccinated at date without day`() = runBlockingTest {
         shouldThrow<InvalidVaccinationCertificateException> {
@@ -241,6 +258,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe InvalidHealthCertificateException.ErrorCode.HC_JSON_SCHEMA_INVALID
     }
 
+    @RepeatedTest(times)
     @Test
     fun `fail vaccinated at date without day and month`() = runBlockingTest {
         shouldThrow<InvalidVaccinationCertificateException> {
@@ -251,6 +269,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe InvalidHealthCertificateException.ErrorCode.HC_JSON_SCHEMA_INVALID
     }
 
+    @RepeatedTest(times)
     @Test
     fun `pass german reference case`() = runBlockingTest {
         extractor.extract(
@@ -263,6 +282,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `pass vaccination and dob with time at midnight`() = runBlockingTest {
         extractor.extract(
@@ -275,6 +295,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `pass vaccination date with full timestamp`() = runBlockingTest {
         extractor.extract(
@@ -287,6 +308,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `happy path extraction recovery`() = runBlockingTest {
         extractor.extract(
@@ -294,6 +316,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         )
     }
 
+    @RepeatedTest(times)
     @Test
     fun `happy path extraction recovery with strict mode`() = runBlockingTest {
         extractor.extract(
@@ -302,6 +325,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         )
     }
 
+    @RepeatedTest(times)
     @Test
     fun `recovery cert fails in mode CERT_VAC_STRICT`() = runBlockingTest {
         shouldThrow<InvalidVaccinationCertificateException> {
@@ -312,6 +336,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe NO_VACCINATION_ENTRY
     }
 
+    @RepeatedTest(times)
     @Test
     fun `recovery cert fails in mode CERT_TEST_STRICT`() = runBlockingTest {
         shouldThrow<InvalidTestCertificateException> {
@@ -322,6 +347,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe NO_TEST_ENTRY
     }
 
+    @RepeatedTest(times)
     @Test
     fun `vaccination cert fails in mode CERT_REC_STRICT`() = runBlockingTest {
         shouldThrow<InvalidRecoveryCertificateException> {
@@ -332,6 +358,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe NO_RECOVERY_ENTRY
     }
 
+    @RepeatedTest(times)
     @Test
     fun `vaccination lenient modes do not verify schema`() = runBlockingTest {
         extractor.extract(
@@ -349,6 +376,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         verify { assetManager.open(any()) }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `test lenient modes do not verify schema`() = runBlockingTest {
         extractor.extract(
@@ -367,6 +395,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         verify { assetManager.open(any()) }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `recovery lenient modes do not verify schema`() = runBlockingTest {
         extractor.extract(
@@ -385,6 +414,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         verify { assetManager.open(any()) }
     }
 
+    @RepeatedTest(times)
     @Test
     fun `invalid base45 encoding fails in strict mode`() = runBlockingTest {
         shouldThrow<InvalidHealthCertificateException> {
@@ -396,6 +426,7 @@ class DccQrCodeExtractorTest : BaseTest() {
         }.errorCode shouldBe HC_BASE45_DECODING_FAILED
     }
 
+    @RepeatedTest(times)
     @Test
     fun `invalid base45 encoding passes in lenient mode`() = runBlockingTest {
         shouldNotThrowAny {
@@ -407,3 +438,5 @@ class DccQrCodeExtractorTest : BaseTest() {
         }
     }
 }
+
+const val times = 5_00
