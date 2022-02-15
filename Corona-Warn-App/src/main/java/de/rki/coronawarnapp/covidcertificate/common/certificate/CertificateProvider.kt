@@ -22,7 +22,7 @@ class CertificateProvider @Inject constructor(
     suspend fun findCertificate(containerId: CertificateContainerId): CwaCovidCertificate {
         val certificates = rcRepo.cwaCertificates.first() +
             tcRepo.cwaCertificates.first() +
-            vcRepo.cwaCertificates.first()
+            vcRepo.cwaCertificatesNew.first()
 
         return certificates.find { it.containerId == containerId }!! // Must be a certificate
     }

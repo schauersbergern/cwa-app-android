@@ -141,7 +141,7 @@ class DataReset @Inject constructor(
 
         valueSetsRepository.clear()
 
-        vaccinationRepository.clear()
+        vaccinationRepository.clearNew()
         testCertificateRepository.clear()
         recoveryCertificateRepository.clear()
 

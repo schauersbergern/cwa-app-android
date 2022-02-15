@@ -12,6 +12,7 @@ import de.rki.coronawarnapp.tag
 import de.rki.coronawarnapp.util.TimeAndDateExtensions.toLocalDateUtc
 import de.rki.coronawarnapp.util.TimeStamper
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -101,14 +102,15 @@ class DccExpirationNotificationService @Inject constructor(
         val state = certificate.getState()
         when (certificate) {
             is RecoveryCertificate -> recoveryRepository.setNotifiedState(certificate.containerId, state, now)
-            is VaccinationCertificate -> vaccinationRepository.setNotifiedState(certificate.containerId, state, now)
+            is VaccinationCertificate -> vaccinationRepository.setNotifiedStateNew(certificate.containerId, state, now)
             is TestCertificate -> testCertificateRepository.setNotifiedState(certificate.containerId, state, now)
             else -> throw UnsupportedOperationException("Class: ${certificate.javaClass.simpleName}")
         }
     }
 
     private suspend fun getCertificates(): Set<CwaCovidCertificate> {
-        val vacCerts = vaccinationRepository.freshVaccinationInfos.first().map { it.vaccinationCertificates }.flatten()
+//        val vacCerts: List<VaccinationCertificate> = vaccinationRepository.freshVaccinationInfos.first().map { it.vaccinationCertificates }.flatten()
+        val vacCerts = vaccinationRepository.freshCertificates.first().map { it.vaccinationCertificate }
         Timber.tag(TAG).d("Checking %d vaccination certificates", vacCerts.size)
         val recCerts = recoveryRepository.freshCertificates.first().map { it.recoveryCertificate }
         Timber.tag(TAG).d("Checking %d recovery certificates", recCerts.size)

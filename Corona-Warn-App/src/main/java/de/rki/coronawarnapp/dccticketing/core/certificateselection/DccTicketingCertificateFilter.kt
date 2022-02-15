@@ -24,7 +24,7 @@ class DccTicketingCertificateFilter @Inject constructor(
     private val recoveryCertificateRepository: RecoveryCertificateRepository,
 ) {
     suspend fun filter(validationCondition: DccTicketingValidationCondition?): Set<CwaCovidCertificate> {
-        val vaccinationCerts = vaccinationRepository.cwaCertificates.first()
+        val vaccinationCerts = vaccinationRepository.cwaCertificatesNew.first()
         val recoveryCerts = recoveryCertificateRepository.cwaCertificates.first()
         val testCerts = testCertificateRepository.cwaCertificates.first()
 

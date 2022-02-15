@@ -60,6 +60,7 @@ class BoosterNotificationService @Inject constructor(
         Timber.tag(TAG).v("notifyIfNecessary() - Finished")
     }
 
+    // TODO: to be deleted?
     private suspend fun getLegacyRuleId(personIdentifier: CertificatePersonIdentifier): String? {
         val vaccinatedPersonsMap = vaccinationRepository.vaccinationInfos.first().associateBy { it.identifier }
         return vaccinatedPersonsMap[personIdentifier]?.data?.boosterRuleIdentifier

@@ -63,7 +63,7 @@ class VaccinationDetailsViewModel @AssistedInject constructor(
 
     fun recycleVaccinationCertificateConfirmed() = launch(scope = appScope) {
         Timber.d("Recycling Vaccination Certificate=$containerId")
-        vaccinationRepository.recycleCertificate(containerId)
+        vaccinationRepository.recycleCertificateNew(containerId)
         dccWalletInfoUpdateTrigger.triggerDccWalletInfoUpdateAfterCertificateChange()
         events.postValue(VaccinationDetailsNavigation.Back)
     }
@@ -80,8 +80,8 @@ class VaccinationDetailsViewModel @AssistedInject constructor(
 
     fun refreshCertState() = launch(scope = appScope) {
         Timber.v("refreshCertState()")
-        vaccinationRepository.acknowledgeState(containerId)
-        if (!fromScanner) vaccinationRepository.markAsSeenByUser(containerId)
+        vaccinationRepository.acknowledgeStateNew(containerId)
+        if (!fromScanner) vaccinationRepository.markAsSeenByUserNew(containerId)
     }
 
     fun onExport() {

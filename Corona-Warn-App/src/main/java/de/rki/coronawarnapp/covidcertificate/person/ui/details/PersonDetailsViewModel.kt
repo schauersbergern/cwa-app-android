@@ -153,6 +153,7 @@ class PersonDetailsViewModel @AssistedInject constructor(
         boosterNotification: BoosterNotification
     ): Boolean {
         personCertificates.certificates.find { it is VaccinationCertificate }?.let { certificate ->
+            // TODO: replace with BoosterNotificationRepository
             val vaccinatedPerson = vaccinatedPerson(certificate)
             if (vaccinatedPerson?.data?.lastSeenBoosterRuleIdentifier != boosterNotification.identifier) {
                 return true

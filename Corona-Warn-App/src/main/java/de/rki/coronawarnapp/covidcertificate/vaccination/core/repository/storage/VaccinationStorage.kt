@@ -3,7 +3,9 @@ package de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.storag
 import android.content.Context
 import androidx.core.content.edit
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import de.rki.coronawarnapp.covidcertificate.common.certificate.CwaCovidCertificate
+import de.rki.coronawarnapp.covidcertificate.recovery.core.storage.StoredRecoveryCertificateData
 import de.rki.coronawarnapp.util.di.AppContext
 import de.rki.coronawarnapp.util.serialization.BaseGson
 import de.rki.coronawarnapp.util.serialization.fromJson
@@ -48,6 +50,15 @@ class VaccinationStorage @Inject constructor(
         return persons.toSet().groupDataByIdentifier()
     }
 
+    suspend fun loadNew(): Set<VaccinationContainer> = mutex.withLock {
+        Timber.tag(TAG).d("vaccinationCertificates - load()")
+        return gson
+            .fromJson<Set<VaccinationContainer>>(
+                prefs.getString(PKEY_VACCINATION_CERT, null) ?: return emptySet(), TYPE_TOKEN
+            )
+            .onEach { Timber.tag(TAG).v("Stored vaccination data loaded: %s", it) }
+    }
+
     suspend fun save(persons: Set<VaccinatedPersonData>) = mutex.withLock {
         Timber.tag(TAG).d("save(%s)", persons)
 
@@ -67,9 +78,24 @@ class VaccinationStorage @Inject constructor(
         }
     }
 
+    suspend fun saveNew(certificates:Set<VaccinationContainer>) = mutex.withLock {
+        Timber.tag(TAG).d("vaccinationCertificates - save(%s)", certificates)
+
+        prefs.edit(commit = true) {
+            if(certificates.isEmpty()){
+                remove(PKEY_VACCINATION_CERT)
+            } else {
+                val rawJson = gson.toJson(certificates, TYPE_TOKEN)
+                putString(PKEY_VACCINATION_CERT, rawJson)
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "VaccinationStorage"
+        private const val PKEY_VACCINATION_CERT = "vaccination.certificate"
         private const val PKEY_PERSON_PREFIX = "vaccination.person."
+        private val TYPE_TOKEN = object : TypeToken<Set<VaccinationContainer>>() {}.type
     }
 }
 

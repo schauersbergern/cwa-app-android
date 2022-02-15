@@ -30,7 +30,7 @@ class DccQrCodeHandler @Inject constructor(
         dscSignatureValidator.validateSignature(dccData = dccQrCode.data)
         return when (dccQrCode) {
             is RecoveryCertificateQRCode -> recoveryCertificateRepository.registerCertificate(dccQrCode).containerId
-            is VaccinationCertificateQRCode -> vaccinationRepository.registerCertificate(dccQrCode).containerId
+            is VaccinationCertificateQRCode -> vaccinationRepository.registerCertificateNew(dccQrCode).containerId
             is TestCertificateQRCode -> testCertificateRepository.registerCertificate(dccQrCode).containerId
             else -> throw UnsupportedQrCodeException()
         }.also {

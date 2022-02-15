@@ -30,7 +30,7 @@ class RecycledCertificatesProvider @Inject constructor(
 ) {
 
     val recycledCertificates: Flow<Set<CwaCovidCertificate>> = combine(
-        vaccinationRepository.recycledCertificates,
+        vaccinationRepository.recycledCertificatesNew,
         testCertificateRepository.recycledCertificates,
         recoveryCertificateRepository.recycledCertificates
     ) { recycledVacCerts, recycledTestCerts, recycledRecCerts ->
@@ -58,7 +58,7 @@ class RecycledCertificatesProvider @Inject constructor(
         when (containerId) {
             is RecoveryCertificateContainerId -> recoveryCertificateRepository.restoreCertificate(containerId)
             is TestCertificateContainerId -> testCertificateRepository.restoreCertificate(containerId)
-            is VaccinationCertificateContainerId -> vaccinationRepository.restoreCertificate(containerId)
+            is VaccinationCertificateContainerId -> vaccinationRepository.restoreCertificateNew(containerId)
         }
         dccWalletInfoUpdateTrigger.triggerDccWalletInfoUpdateAfterCertificateChange()
     }
@@ -68,7 +68,7 @@ class RecycledCertificatesProvider @Inject constructor(
         when (containerId) {
             is RecoveryCertificateContainerId -> recoveryCertificateRepository.deleteCertificate(containerId)
             is TestCertificateContainerId -> testCertificateRepository.deleteCertificate(containerId)
-            is VaccinationCertificateContainerId -> vaccinationRepository.deleteCertificate(containerId)
+            is VaccinationCertificateContainerId -> vaccinationRepository.deleteCertificateNew(containerId)
         }
     }
 
