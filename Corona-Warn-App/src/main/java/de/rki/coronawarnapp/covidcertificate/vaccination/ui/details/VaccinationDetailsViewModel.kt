@@ -1,5 +1,6 @@
 package de.rki.coronawarnapp.covidcertificate.vaccination.ui.details
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -7,7 +8,6 @@ import dagger.assisted.AssistedInject
 import de.rki.coronawarnapp.ccl.dccwalletinfo.update.DccWalletInfoUpdateTrigger
 import de.rki.coronawarnapp.covidcertificate.common.repository.VaccinationCertificateContainerId
 import de.rki.coronawarnapp.covidcertificate.pdf.ui.canBeExported
-import de.rki.coronawarnapp.covidcertificate.vaccination.core.VaccinatedPerson
 import de.rki.coronawarnapp.covidcertificate.vaccination.core.VaccinationCertificate
 import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.VaccinationRepository
 import de.rki.coronawarnapp.covidcertificate.validation.core.DccValidationRepository
@@ -33,13 +33,11 @@ class VaccinationDetailsViewModel @AssistedInject constructor(
 
     private var qrCode: CoilQrCode? = null
 
-    val vaccinationCertificate = vaccinationRepository.vaccinationInfos
-        .map { persons ->
-            val findVaccinationDetails = findVaccinationDetails(persons)
-            qrCode = findVaccinationDetails.certificate?.qrCodeToDisplay
-            findVaccinationDetails
+    val vaccinationCertificate: LiveData<VaccinationCertificate?> = vaccinationRepository.certificates.map { certificates ->
+        certificates.find { it.containerId == containerId }?.vaccinationCertificate?.also {
+            qrCode = it.qrCodeToDisplay
         }
-        .asLiveData(context = dispatcherProvider.Default)
+    }.asLiveData(dispatcherProvider.Default)
 
     val errors = SingleLiveEvent<Throwable>()
     val events = SingleLiveEvent<VaccinationDetailsNavigation>()
@@ -49,17 +47,6 @@ class VaccinationDetailsViewModel @AssistedInject constructor(
     fun onClose() = events.postValue(VaccinationDetailsNavigation.Back)
 
     fun openFullScreen() = qrCode?.let { events.postValue(VaccinationDetailsNavigation.FullQrCode(it)) }
-
-    private fun findVaccinationDetails(
-        vaccinatedPersons: Set<VaccinatedPerson>
-    ): VaccinationDetails {
-        val person = vaccinatedPersons.find { p ->
-            p.vaccinationContainers.any { it.containerId == containerId }
-        }
-
-        val certificate = person?.vaccinationCertificates?.find { it.containerId == containerId }
-        return VaccinationDetails(certificate = certificate)
-    }
 
     fun recycleVaccinationCertificateConfirmed() = launch(scope = appScope) {
         Timber.d("Recycling Vaccination Certificate=$containerId")
@@ -85,7 +72,7 @@ class VaccinationDetailsViewModel @AssistedInject constructor(
     }
 
     fun onExport() {
-        if (vaccinationCertificate.value?.certificate?.canBeExported() == false) {
+        if (vaccinationCertificate.value?.canBeExported() == false) {
             exportError.postValue(null)
         } else {
             events.postValue(VaccinationDetailsNavigation.Export(containerId))

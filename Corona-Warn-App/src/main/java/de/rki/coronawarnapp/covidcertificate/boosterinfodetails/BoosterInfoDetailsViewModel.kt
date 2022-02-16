@@ -5,7 +5,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import de.rki.coronawarnapp.ccl.ui.text.CCLTextFormatter
 import de.rki.coronawarnapp.covidcertificate.person.core.PersonCertificatesProvider
-import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.VaccinationRepository
+import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.BoosterRepository
 import de.rki.coronawarnapp.util.coroutine.DispatcherProvider
 import de.rki.coronawarnapp.util.ui.SingleLiveEvent
 import de.rki.coronawarnapp.util.viewmodel.CWAViewModel
@@ -17,7 +17,7 @@ import timber.log.Timber
 class BoosterInfoDetailsViewModel @AssistedInject constructor(
     dispatcherProvider: DispatcherProvider,
     personCertificatesProvider: PersonCertificatesProvider,
-    private val vaccinationRepository: VaccinationRepository,
+    private val boosterRepository: BoosterRepository,
     @Assisted private val personIdentifierCode: String,
     private val format: CCLTextFormatter,
 ) : CWAViewModel(dispatcherProvider) {
@@ -27,13 +27,13 @@ class BoosterInfoDetailsViewModel @AssistedInject constructor(
     private val uiStateFlow = personCertificatesProvider.personCertificates.mapNotNull { certificateSet ->
         val boosterNotification = certificateSet.first { it.personIdentifier?.codeSHA256 == personIdentifierCode }
             .dccWalletInfo!!.boosterNotification.also {
-            it.identifier?.let { id ->
-                vaccinationRepository.acknowledgeBoosterRule(
-                    personIdentifierCode = personIdentifierCode,
-                    boosterIdentifier = id
-                )
+                it.identifier?.let { id ->
+                    boosterRepository.acknowledgeBoosterRule(
+                        personIdentifierCode = personIdentifierCode,
+                        boosterIdentifier = id
+                    )
+                }
             }
-        }
         UiState(
             titleText = format(boosterNotification.titleText),
             subtitleText = format(boosterNotification.subtitleText),

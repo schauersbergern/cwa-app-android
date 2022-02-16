@@ -7,8 +7,9 @@ import de.rki.coronawarnapp.covidcertificate.common.certificate.CertificatePerso
 import de.rki.coronawarnapp.covidcertificate.common.certificate.CwaCovidCertificate
 import de.rki.coronawarnapp.covidcertificate.recovery.core.RecoveryCertificateRepository
 import de.rki.coronawarnapp.covidcertificate.test.core.TestCertificateRepository
-import de.rki.coronawarnapp.covidcertificate.vaccination.core.VaccinatedPerson
+import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.BoosterRepository
 import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.VaccinationRepository
+import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.storage.BoosterData
 import de.rki.coronawarnapp.util.coroutine.AppScope
 import de.rki.coronawarnapp.util.flow.shareLatest
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ import javax.inject.Inject
 @Reusable
 class PersonCertificatesProvider @Inject constructor(
     private val personCertificatesSettings: PersonCertificatesSettings,
+    private val boosterRepository: BoosterRepository,
     vaccinationRepository: VaccinationRepository,
     testCertificateRepository: TestCertificateRepository,
     recoveryCertificateRepository: RecoveryCertificateRepository,
@@ -33,15 +35,14 @@ class PersonCertificatesProvider @Inject constructor(
     }
 
     val personCertificates: Flow<Set<PersonCertificates>> = combine(
-        vaccinationRepository.vaccinationInfos,
+        vaccinationRepository.cwaCertificatesNew,
         testCertificateRepository.cwaCertificates,
         recoveryCertificateRepository.cwaCertificates,
         personCertificatesSettings.currentCwaUser.flow,
         dccWalletInfoRepository.personWallets
-    ) { vaccPersons, tests, recoveries, cwaUser, personWallets ->
+    ) { vaccinations, tests, recoveries, cwaUser, personWallets ->
 
         val personWalletsGroup = personWallets.associateBy { it.personGroupKey }
-        val vaccinations = vaccPersons.flatMap { it.vaccinationCertificates }.toSet()
         val allCerts: Set<CwaCovidCertificate> = (vaccinations + tests + recoveries)
 
         val personCertificatesMap = allCerts.groupBy {
@@ -59,7 +60,7 @@ class PersonCertificatesProvider @Inject constructor(
             val dccWalletInfo = personWalletsGroup[personIdentifier.groupingKey]?.dccWalletInfo
 
             val badgeCount = certs.filter { it.hasNotificationBadge }.count() +
-                vaccPersons.boosterBadgeCount(personIdentifier, dccWalletInfo?.boosterNotification)
+                boosterBadgeCount(personIdentifier, dccWalletInfo?.boosterNotification)
 
             Timber.tag(TAG).d("Badge count of %s =%s", personIdentifier.codeSHA256, badgeCount)
 
@@ -85,24 +86,24 @@ class PersonCertificatesProvider @Inject constructor(
     val personsBadgeCount: Flow<Int> = personCertificates
         .map { persons -> persons.sumOf { it.badgeCount } }
 
-    private fun Set<VaccinatedPerson>.boosterBadgeCount(
+    private suspend fun boosterBadgeCount(
         personIdentifier: CertificatePersonIdentifier,
         boosterNotification: BoosterNotification?
     ): Int {
         if (boosterNotification == null) {
             return 0
         }
-        val vaccinatedPerson = singleOrNull { it.identifier == personIdentifier }
-        return when (hasBoosterRuleNotYetSeen(vaccinatedPerson, boosterNotification)) {
+        val boosterData = boosterRepository.getBoosterDataByPersonIndetifierCode(personIdentifier.codeSHA256)
+        return when (hasBoosterRuleNotYetSeen(boosterData, boosterNotification)) {
             true -> 1
             else -> 0
         }
     }
 
     private fun hasBoosterRuleNotYetSeen(
-        vaccinatedPerson: VaccinatedPerson?,
+        boosterData: BoosterData?,
         boosterNotification: BoosterNotification
-    ) = vaccinatedPerson?.data?.lastSeenBoosterRuleIdentifier != boosterNotification.identifier
+    ) = boosterData?.lastSeenBoosterRuleIdentifier != boosterNotification.identifier
 
     companion object {
         private val TAG = PersonCertificatesProvider::class.simpleName!!

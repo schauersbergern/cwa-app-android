@@ -23,9 +23,9 @@ import de.rki.coronawarnapp.covidcertificate.person.ui.details.items.Vaccination
 import de.rki.coronawarnapp.covidcertificate.person.ui.overview.PersonColorShade
 import de.rki.coronawarnapp.covidcertificate.recovery.core.RecoveryCertificate
 import de.rki.coronawarnapp.covidcertificate.test.core.TestCertificate
-import de.rki.coronawarnapp.covidcertificate.vaccination.core.VaccinatedPerson
 import de.rki.coronawarnapp.covidcertificate.vaccination.core.VaccinationCertificate
-import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.VaccinationRepository
+import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.BoosterRepository
+import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.storage.BoosterData
 import de.rki.coronawarnapp.covidcertificate.validation.core.DccValidationRepository
 import de.rki.coronawarnapp.util.coroutine.DispatcherProvider
 import de.rki.coronawarnapp.util.ui.SingleLiveEvent
@@ -42,7 +42,7 @@ import timber.log.Timber
 class PersonDetailsViewModel @AssistedInject constructor(
     dispatcherProvider: DispatcherProvider,
     private val personCertificatesProvider: PersonCertificatesProvider,
-    private val vaccinationRepository: VaccinationRepository,
+    private val boosterRepository: BoosterRepository,
     private val dccValidationRepository: DccValidationRepository,
     @Assisted private val personIdentifierCode: String,
     @Assisted private val colorShade: PersonColorShade,
@@ -153,9 +153,8 @@ class PersonDetailsViewModel @AssistedInject constructor(
         boosterNotification: BoosterNotification
     ): Boolean {
         personCertificates.certificates.find { it is VaccinationCertificate }?.let { certificate ->
-            // TODO: replace with BoosterNotificationRepository
-            val vaccinatedPerson = vaccinatedPerson(certificate)
-            if (vaccinatedPerson?.data?.lastSeenBoosterRuleIdentifier != boosterNotification.identifier) {
+            val boosterData = boosterData(certificate)
+            if(boosterData?.lastSeenBoosterRuleIdentifier != boosterNotification.identifier) {
                 return true
             }
         }
@@ -236,8 +235,8 @@ class PersonDetailsViewModel @AssistedInject constructor(
         else -> PersonColorShade.COLOR_INVALID
     }
 
-    private suspend fun vaccinatedPerson(certificate: CwaCovidCertificate): VaccinatedPerson? =
-        vaccinationRepository.vaccinationInfos.firstOrNull()?.find { it.identifier == certificate.personIdentifier }
+    private suspend fun boosterData(certificate: CwaCovidCertificate): BoosterData? =
+        boosterRepository.boosterDataSet.firstOrNull()?.find { it.personIdentifierCode == certificate.personIdentifier.codeSHA256 }
 
     data class UiState(
         val name: String,

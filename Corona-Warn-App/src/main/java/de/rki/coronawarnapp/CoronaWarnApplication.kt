@@ -26,6 +26,7 @@ import de.rki.coronawarnapp.coronatest.type.rapidantigen.execution.RAResultSched
 import de.rki.coronawarnapp.coronatest.type.rapidantigen.notification.RATTestResultAvailableNotificationService
 import de.rki.coronawarnapp.covidcertificate.common.statecheck.DccStateCheckScheduler
 import de.rki.coronawarnapp.covidcertificate.test.core.execution.TestCertificateRetrievalScheduler
+import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.storage.BoosterStorage
 import de.rki.coronawarnapp.covidcertificate.vaccination.core.repository.storage.VaccinationStorage
 import de.rki.coronawarnapp.datadonation.analytics.worker.DataDonationAnalyticsScheduler
 import de.rki.coronawarnapp.deadman.DeadmanNotificationScheduler
@@ -97,6 +98,7 @@ class CoronaWarnApplication : Application(), HasAndroidInjector {
     @Inject lateinit var recycleBinCleanUpScheduler: RecycleBinCleanUpScheduler
     @Inject lateinit var vaccinationStorage: VaccinationStorage
     @Inject lateinit var cclConfigurationUpdaterScheduler: CCLConfigurationUpdateScheduler
+    @Inject lateinit var boosterStorage: BoosterStorage
 
     @AppScope
     @Inject lateinit var appScope: CoroutineScope
