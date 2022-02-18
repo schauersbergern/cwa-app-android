@@ -10,11 +10,10 @@ import de.rki.coronawarnapp.task.TaskController
 import de.rki.coronawarnapp.task.common.DefaultTaskRequest
 import de.rki.coronawarnapp.util.coroutine.AppScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,18 +29,16 @@ class DccWalletInfoUpdateTrigger @Inject constructor(
 ) {
 
     init {
-        personCertificatesProvider.personCertificates
-            .zipWithNext { prevPersons, currentPersons ->
-                val prevsCerts = prevPersons.qrcodeHashSet()
-                val currentCerts = currentPersons.qrcodeHashSet()
-                if (prevsCerts != currentCerts) {
-                    Timber.tag(TAG).d("prevsCerts=%s, currentCerts=%s", prevsCerts, currentCerts)
+        appScope.launch {
+            personCertificatesProvider.personCertificates
+                .distinctUntilChanged { old, new ->
+                    old.qrcodeHashSet() == new.qrcodeHashSet()
+                }
+                .collectLatest {
                     dccWalletInfoCalculationManager.triggerCalculationAfterCertificateChange()
                     dccWalletInfoCleaner.clean()
                 }
-            }
-            .catch { e -> Timber.tag(TAG).e(e.localizedMessage ?: e.message ?: e.javaClass.canonicalName) }
-            .launchIn(appScope)
+        }
     }
 
     private fun Set<PersonCertificates>.qrcodeHashSet() = flatMap {
@@ -67,14 +64,3 @@ class DccWalletInfoUpdateTrigger @Inject constructor(
         private val TAG = tag<DccWalletInfoUpdateTrigger>()
     }
 }
-
-@Suppress("UNCHECKED_CAST")
-fun <T, R> Flow<T>.zipWithNext(transform: suspend (T, T) -> R): Flow<R> = flow {
-    var prev: Any? = UNDEFINED
-    collect { value ->
-        if (prev !== UNDEFINED) emit(transform(prev as T, value))
-        prev = value
-    }
-}
-
-private object UNDEFINED
