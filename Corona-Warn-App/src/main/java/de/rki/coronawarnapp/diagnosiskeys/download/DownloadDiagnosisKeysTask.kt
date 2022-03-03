@@ -43,7 +43,6 @@ class DownloadDiagnosisKeysTask @Inject constructor(
     private var isCanceled = false
 
     override suspend fun run(arguments: Task.Arguments): Result {
-        val rollbackItems = mutableListOf<RollbackItem>()
         try {
             Timber.d("Running with arguments=%s", arguments)
             arguments as Arguments
@@ -102,7 +101,7 @@ class DownloadDiagnosisKeysTask @Inject constructor(
             }
 
             val availableKeyFiles = keySyncResult.availableKeys.map { it.path }
-            val totalFileSize = availableKeyFiles.fold(0L, { acc, file -> file.length() + acc })
+            val totalFileSize = availableKeyFiles.fold(0L) { acc, file -> file.length() + acc }
 
             internalProgress.value = Progress.KeyFilesDownloadFinished(availableKeyFiles.size, totalFileSize)
 
@@ -127,9 +126,6 @@ class DownloadDiagnosisKeysTask @Inject constructor(
             return Result()
         } catch (error: Exception) {
             Timber.tag(TAG).e(error)
-
-            rollback(rollbackItems)
-
             throw error
         } finally {
             Timber.i("Finished (isCanceled=$isCanceled).")
@@ -179,16 +175,7 @@ class DownloadDiagnosisKeysTask @Inject constructor(
             if (it) Timber.tag(TAG).w("Aborting. Last detection is recent (<24h) and no new keyfiles.")
         }
     }
-
-    private fun rollback(rollbackItems: MutableList<RollbackItem>) {
-        try {
-            Timber.tag(TAG).d("Initiate Rollback")
-            for (rollbackItem: RollbackItem in rollbackItems) rollbackItem.invoke()
-        } catch (rollbackException: Exception) {
-            Timber.tag(TAG).e(rollbackException, "Rollback failed.")
-        }
-    }
-
+    
     private suspend fun getAvailableKeyFiles(
         requestedCountries: List<String>?
     ): KeyPackageSyncTool.Result {
