@@ -1,10 +1,9 @@
 package de.rki.coronawarnapp.diagnosiskeys.storage
 
-import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import de.rki.coronawarnapp.diagnosiskeys.server.LocationCode
 import de.rki.coronawarnapp.util.TimeStamper
-import de.rki.coronawarnapp.util.di.AppContext
+import de.rki.coronawarnapp.util.di.RiskPackagesStoragePath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -20,13 +19,13 @@ import javax.inject.Singleton
 
 @Singleton
 class KeyCacheRepository @Inject constructor(
-    @AppContext private val context: Context,
+    @RiskPackagesStoragePath private val storagePath: File,
     private val databaseFactory: KeyCacheDatabase.Factory,
     private val timeStamper: TimeStamper
 ) {
 
-    private val storageDir by lazy {
-        File(context.cacheDir, "diagnosis_keys").apply {
+    private val keysStorageDir by lazy {
+        File(storagePath, "diagnosis_keys").apply {
             if (!exists()) {
                 if (mkdirs()) {
                     Timber.d("KeyCache directory created: %s", this)
@@ -71,7 +70,7 @@ class KeyCacheRepository @Inject constructor(
     )
 
     fun getPathForKey(cachedKeyInfo: CachedKeyInfo): File {
-        return File(storageDir, cachedKeyInfo.fileName)
+        return File(keysStorageDir, cachedKeyInfo.fileName)
     }
 
     suspend fun getAllCachedKeys(): List<CachedKey> {

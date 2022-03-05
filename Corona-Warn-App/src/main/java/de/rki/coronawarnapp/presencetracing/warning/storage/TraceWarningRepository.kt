@@ -1,11 +1,10 @@
 package de.rki.coronawarnapp.presencetracing.warning.storage
 
-import android.content.Context
 import de.rki.coronawarnapp.diagnosiskeys.server.LocationCode
 import de.rki.coronawarnapp.presencetracing.warning.WarningPackageId
 import de.rki.coronawarnapp.util.HourInterval
 import de.rki.coronawarnapp.util.TimeStamper
-import de.rki.coronawarnapp.util.di.AppContext
+import de.rki.coronawarnapp.util.di.RiskPackagesStoragePath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -17,15 +16,15 @@ import javax.inject.Singleton
 
 @Singleton
 class TraceWarningRepository @Inject constructor(
-    @AppContext private val context: Context,
+    @RiskPackagesStoragePath private val storagePath: File,
     private val factory: TraceWarningDatabase.Factory,
     private val timeStamper: TimeStamper
 ) {
     private val database by lazy { factory.create() }
     private val dao: TraceWarningPackageDao by lazy { database.traceWarningPackageDao() }
 
-    private val storageDir by lazy {
-        File(context.cacheDir, "trace_warning_packages").apply {
+    private val warningsStorageDir by lazy {
+        File(storagePath, "trace_warning_packages").apply {
             if (!exists()) {
                 if (mkdirs()) {
                     Timber.tag(TAG).d("Trace warning package directory created: %s", this)
@@ -56,7 +55,7 @@ class TraceWarningRepository @Inject constructor(
         }
 
     fun getPathForMetaData(metaData: TraceWarningPackageMetadata): File {
-        return File(storageDir, metaData.fileName)
+        return File(warningsStorageDir, metaData.fileName)
     }
 
     val allMetaData = dao.getAllMetaData()
@@ -137,7 +136,7 @@ class TraceWarningRepository @Inject constructor(
         Timber.tag(TAG).d("clear()")
         dao.clear()
 
-        if (!storageDir.deleteRecursively()) {
+        if (!warningsStorageDir.deleteRecursively()) {
             Timber.tag(TAG).e("Failed to delete all TraceWarningPackage files.")
         }
     }
@@ -167,7 +166,7 @@ class TraceWarningRepository @Inject constructor(
         }
 
         // File without owner?
-        storageDir.listFiles()?.forEach { file ->
+        warningsStorageDir.listFiles()?.forEach { file ->
             val orphan = allMetadata.none { getPathForMetaData(it) == file }
 
             if (orphan && file.delete()) {

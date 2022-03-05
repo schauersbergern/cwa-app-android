@@ -67,7 +67,7 @@ abstract class CommonSyncToolTest : BaseIOTest() {
 
         every { timeStamper.nowUTC } returns Instant.parse("2020-01-04T03:15:00.000Z")
 
-        coEvery { deviceStorage.requireSpacePrivateStorage(any()) } returns mockk()
+        coEvery { deviceStorage.requireSufficientStorage(any()) } returns mockk()
 
         coEvery {
             keyCache.createCacheEntry(CachedKeyInfo.Type.LOCATION_DAY, any(), any(), null)

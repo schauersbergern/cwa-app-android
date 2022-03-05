@@ -42,7 +42,7 @@ class BaseKeyPackageSyncToolTest : BaseIOTest() {
         testDir.mkdirs()
         testDir.exists() shouldBe true
 
-        coEvery { deviceStorage.requireSpacePrivateStorage(any()) } returns mockk()
+        coEvery { deviceStorage.requireSufficientStorage(any()) } returns mockk()
         coEvery { keyCache.delete(any()) } just Runs
     }
 
@@ -267,7 +267,7 @@ class BaseKeyPackageSyncToolTest : BaseIOTest() {
         }
         instance.requireStorageSpace(listOf(countryDay, countryHour))
 
-        coVerify { deviceStorage.requireSpacePrivateStorage(10337L) }
+        coVerify { deviceStorage.requireSufficientStorage(10337L) }
     }
 
     @Test

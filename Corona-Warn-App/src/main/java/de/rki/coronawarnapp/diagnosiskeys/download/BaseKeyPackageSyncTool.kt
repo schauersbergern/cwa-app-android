@@ -43,7 +43,7 @@ open class BaseKeyPackageSyncTool(
             acc + item.approximateSizeInBytes
         }
         Timber.tag(tag).d("%dB are required for %s", requiredBytes, data)
-        return deviceStorage.requireSpacePrivateStorage(requiredBytes).also {
+        return deviceStorage.requireSufficientStorage(requiredBytes).also {
             Timber.tag(tag).d("Storage check result: %s", it)
         }
     }

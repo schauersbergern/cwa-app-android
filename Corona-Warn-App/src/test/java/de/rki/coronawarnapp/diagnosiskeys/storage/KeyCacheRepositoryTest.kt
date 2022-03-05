@@ -59,7 +59,7 @@ class KeyCacheRepositoryTest : BaseIOTest() {
     }
 
     private fun createRepo(): KeyCacheRepository = KeyCacheRepository(
-        context = context,
+        storagePath = File("./cache"),
         databaseFactory = databaseFactory,
         timeStamper = timeStamper
     )

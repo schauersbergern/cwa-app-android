@@ -7,8 +7,10 @@ import android.os.Build
 import android.os.storage.StorageManager
 import android.text.format.Formatter
 import dagger.Reusable
+import de.rki.coronawarnapp.tag
 import de.rki.coronawarnapp.util.BuildVersionWrap
 import de.rki.coronawarnapp.util.di.AppContext
+import de.rki.coronawarnapp.util.di.RiskPackagesStoragePath
 import de.rki.coronawarnapp.util.hasAPILevel
 import de.rki.coronawarnapp.util.storage.StatsFsProvider
 import kotlinx.coroutines.Dispatchers
@@ -22,10 +24,10 @@ import javax.inject.Inject
 @Reusable
 class DeviceStorage @Inject constructor(
     @AppContext private val context: Context,
+    @RiskPackagesStoragePath private val storagePath: File,
     private val statsFsProvider: StatsFsProvider
 ) {
 
-    private val privateStorage = context.filesDir
     private val storageManager by lazy { context.getSystemService(Context.STORAGE_SERVICE) as StorageManager }
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -69,7 +71,7 @@ class DeviceStorage @Inject constructor(
 
     private fun requestStorageLegacy(targetPath: File, requiredBytes: Long = -1L): CheckResult {
         Timber.tag(TAG).v(
-            "requestStorageAPI26Plus(path=%s, requiredBytes=%d)",
+            "requestStorageLegacy(path=%s, requiredBytes=%d)",
             targetPath,
             requiredBytes
         )
@@ -119,15 +121,14 @@ class DeviceStorage @Inject constructor(
      *
      * @throws IOException if storage check or allocation fails.
      */
-    suspend fun checkSpacePrivateStorage(requiredBytes: Long = -1L): CheckResult =
-        checkSpace(privateStorage, requiredBytes)
+    suspend fun checkStorageSpace(requiredBytes: Long = -1L): CheckResult = checkSpace(storagePath, requiredBytes)
 
     /**
-     * Like **[checkSpacePrivateStorage]** but throws **[InsufficientStorageException]**
+     * Like **[checkStorageSpace]** but throws **[InsufficientStorageException]**
      * if not enough is available
      */
-    suspend fun requireSpacePrivateStorage(requiredBytes: Long = -1L): CheckResult =
-        checkSpace(privateStorage, requiredBytes).apply {
+    suspend fun requireSufficientStorage(requiredBytes: Long = -1L): CheckResult =
+        checkSpace(storagePath, requiredBytes).apply {
             if (!isSpaceAvailable) throw InsufficientStorageException(this)
         }
 
@@ -139,14 +140,11 @@ class DeviceStorage @Inject constructor(
         val totalBytes: Long
     ) {
 
-        fun getFormattedFreeSpace(context: Context): String =
-            Formatter.formatShortFileSize(context, freeBytes)
-
-        fun getFormattedTotalSpace(context: Context): String =
-            Formatter.formatShortFileSize(context, totalBytes)
+        fun getFormattedFreeSpace(context: Context): String = Formatter.formatShortFileSize(context, freeBytes)
+        fun getFormattedTotalSpace(context: Context): String = Formatter.formatShortFileSize(context, totalBytes)
     }
 
     companion object {
-        val TAG = DeviceStorage::class.java.simpleName
+        private val TAG = tag<DeviceStorage>()
     }
 }

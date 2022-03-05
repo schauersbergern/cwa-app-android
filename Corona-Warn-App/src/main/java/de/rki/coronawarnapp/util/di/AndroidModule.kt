@@ -20,6 +20,7 @@ import dagger.Module
 import dagger.Provides
 import de.rki.coronawarnapp.CoronaWarnApplication
 import de.rki.coronawarnapp.util.worker.WorkManagerProvider
+import java.io.File
 import javax.inject.Singleton
 
 @Module
@@ -81,4 +82,10 @@ class AndroidModule {
     fun assetManager(
         @AppContext context: Context
     ): AssetManager = context.assets
+
+    @Provides
+    @RiskPackagesStoragePath
+    fun riskPackagesStoragePath(
+        @AppContext context: Context
+    ): File = context.cacheDir
 }

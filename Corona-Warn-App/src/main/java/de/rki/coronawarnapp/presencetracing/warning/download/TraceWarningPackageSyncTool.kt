@@ -171,7 +171,7 @@ class TraceWarningPackageSyncTool @Inject constructor(
     private suspend fun requireStorageSpaceFor(size: Int): DeviceStorage.CheckResult {
         val requiredBytes: Long = APPROX_FILE_SIZE * size
         Timber.tag(TAG).d("%dB are required for %d files", requiredBytes, size)
-        return deviceStorage.requireSpacePrivateStorage(requiredBytes).also {
+        return deviceStorage.requireSufficientStorage(requiredBytes).also {
             Timber.tag(TAG).d("Storage check result: %s", it)
         }
     }
