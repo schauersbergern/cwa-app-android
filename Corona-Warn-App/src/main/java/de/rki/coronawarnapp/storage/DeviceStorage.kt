@@ -10,7 +10,7 @@ import dagger.Reusable
 import de.rki.coronawarnapp.tag
 import de.rki.coronawarnapp.util.BuildVersionWrap
 import de.rki.coronawarnapp.util.di.AppContext
-import de.rki.coronawarnapp.util.di.RiskPackagesStoragePath
+import de.rki.coronawarnapp.util.di.AppCacheDir
 import de.rki.coronawarnapp.util.hasAPILevel
 import de.rki.coronawarnapp.util.storage.StatsFsProvider
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +24,7 @@ import javax.inject.Inject
 @Reusable
 class DeviceStorage @Inject constructor(
     @AppContext private val context: Context,
-    @RiskPackagesStoragePath private val storagePath: File,
+    @AppCacheDir private val storagePath: File,
     private val statsFsProvider: StatsFsProvider
 ) {
 

@@ -4,7 +4,7 @@ import de.rki.coronawarnapp.diagnosiskeys.server.LocationCode
 import de.rki.coronawarnapp.presencetracing.warning.WarningPackageId
 import de.rki.coronawarnapp.util.HourInterval
 import de.rki.coronawarnapp.util.TimeStamper
-import de.rki.coronawarnapp.util.di.RiskPackagesStoragePath
+import de.rki.coronawarnapp.util.di.AppCacheDir
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,7 +16,7 @@ import javax.inject.Singleton
 
 @Singleton
 class TraceWarningRepository @Inject constructor(
-    @RiskPackagesStoragePath private val storagePath: File,
+    @AppCacheDir private val storagePath: File,
     private val factory: TraceWarningDatabase.Factory,
     private val timeStamper: TimeStamper
 ) {

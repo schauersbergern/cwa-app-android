@@ -84,7 +84,7 @@ class AndroidModule {
     ): AssetManager = context.assets
 
     @Provides
-    @RiskPackagesStoragePath
+    @AppCacheDir
     fun riskPackagesStoragePath(
         @AppContext context: Context
     ): File = context.cacheDir

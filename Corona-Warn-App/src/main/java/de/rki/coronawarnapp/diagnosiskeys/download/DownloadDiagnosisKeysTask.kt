@@ -8,7 +8,6 @@ import de.rki.coronawarnapp.diagnosiskeys.server.LocationCode
 import de.rki.coronawarnapp.environment.EnvironmentSetup
 import de.rki.coronawarnapp.nearby.ENFClient
 import de.rki.coronawarnapp.nearby.modules.detectiontracker.TrackedExposureDetection
-import de.rki.coronawarnapp.risk.RollbackItem
 import de.rki.coronawarnapp.tag
 import de.rki.coronawarnapp.task.Task
 import de.rki.coronawarnapp.task.TaskCancellationException
@@ -175,7 +174,7 @@ class DownloadDiagnosisKeysTask @Inject constructor(
             if (it) Timber.tag(TAG).w("Aborting. Last detection is recent (<24h) and no new keyfiles.")
         }
     }
-    
+
     private suspend fun getAvailableKeyFiles(
         requestedCountries: List<String>?
     ): KeyPackageSyncTool.Result {

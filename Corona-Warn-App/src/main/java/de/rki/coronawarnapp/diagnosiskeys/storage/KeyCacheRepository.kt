@@ -3,7 +3,7 @@ package de.rki.coronawarnapp.diagnosiskeys.storage
 import android.database.sqlite.SQLiteConstraintException
 import de.rki.coronawarnapp.diagnosiskeys.server.LocationCode
 import de.rki.coronawarnapp.util.TimeStamper
-import de.rki.coronawarnapp.util.di.RiskPackagesStoragePath
+import de.rki.coronawarnapp.util.di.AppCacheDir
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -19,7 +19,7 @@ import javax.inject.Singleton
 
 @Singleton
 class KeyCacheRepository @Inject constructor(
-    @RiskPackagesStoragePath private val storagePath: File,
+    @AppCacheDir private val storagePath: File,
     private val databaseFactory: KeyCacheDatabase.Factory,
     private val timeStamper: TimeStamper
 ) {
