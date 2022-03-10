@@ -19,13 +19,13 @@ import javax.inject.Singleton
 
 @Singleton
 class KeyCacheRepository @Inject constructor(
-    @AppCacheDir private val storagePath: File,
+    @AppCacheDir private val cacheDir: File,
     private val databaseFactory: KeyCacheDatabase.Factory,
     private val timeStamper: TimeStamper
 ) {
 
     private val keysStorageDir by lazy {
-        File(storagePath, "diagnosis_keys").apply {
+        File(cacheDir, "diagnosis_keys").apply {
             if (!exists()) {
                 if (mkdirs()) {
                     Timber.d("KeyCache directory created: %s", this)

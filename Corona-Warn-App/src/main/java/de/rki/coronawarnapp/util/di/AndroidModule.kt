@@ -85,7 +85,7 @@ class AndroidModule {
 
     @Provides
     @AppCacheDir
-    fun riskPackagesStoragePath(
+    fun appCacheDir(
         @AppContext context: Context
     ): File = context.cacheDir
 }

@@ -16,7 +16,7 @@ import javax.inject.Singleton
 
 @Singleton
 class TraceWarningRepository @Inject constructor(
-    @AppCacheDir private val storagePath: File,
+    @AppCacheDir private val cacheDir: File,
     private val factory: TraceWarningDatabase.Factory,
     private val timeStamper: TimeStamper
 ) {
@@ -24,7 +24,7 @@ class TraceWarningRepository @Inject constructor(
     private val dao: TraceWarningPackageDao by lazy { database.traceWarningPackageDao() }
 
     private val warningsStorageDir by lazy {
-        File(storagePath, "trace_warning_packages").apply {
+        File(cacheDir, "trace_warning_packages").apply {
             if (!exists()) {
                 if (mkdirs()) {
                     Timber.tag(TAG).d("Trace warning package directory created: %s", this)

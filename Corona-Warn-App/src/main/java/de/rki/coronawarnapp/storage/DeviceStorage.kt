@@ -24,7 +24,7 @@ import javax.inject.Inject
 @Reusable
 class DeviceStorage @Inject constructor(
     @AppContext private val context: Context,
-    @AppCacheDir private val storagePath: File,
+    @AppCacheDir private val cacheDir: File,
     private val statsFsProvider: StatsFsProvider
 ) {
 
@@ -121,14 +121,14 @@ class DeviceStorage @Inject constructor(
      *
      * @throws IOException if storage check or allocation fails.
      */
-    suspend fun checkStorageSpace(requiredBytes: Long = -1L): CheckResult = checkSpace(storagePath, requiredBytes)
+    suspend fun checkStorageSpace(requiredBytes: Long = -1L): CheckResult = checkSpace(cacheDir, requiredBytes)
 
     /**
      * Like **[checkStorageSpace]** but throws **[InsufficientStorageException]**
      * if not enough is available
      */
     suspend fun requireSufficientStorage(requiredBytes: Long = -1L): CheckResult =
-        checkSpace(storagePath, requiredBytes).apply {
+        checkSpace(cacheDir, requiredBytes).apply {
             if (!isSpaceAvailable) throw InsufficientStorageException(this)
         }
 
