@@ -24,7 +24,7 @@ class KeyCacheRepository @Inject constructor(
     private val timeStamper: TimeStamper
 ) {
 
-    private val keysStorageDir by lazy {
+    private val keysCacheDir by lazy {
         File(cacheDir, "diagnosis_keys").apply {
             if (!exists()) {
                 if (mkdirs()) {
@@ -70,7 +70,7 @@ class KeyCacheRepository @Inject constructor(
     )
 
     fun getPathForKey(cachedKeyInfo: CachedKeyInfo): File {
-        return File(keysStorageDir, cachedKeyInfo.fileName)
+        return File(keysCacheDir, cachedKeyInfo.fileName)
     }
 
     suspend fun getAllCachedKeys(): List<CachedKey> {

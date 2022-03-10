@@ -23,7 +23,7 @@ class TraceWarningRepository @Inject constructor(
     private val database by lazy { factory.create() }
     private val dao: TraceWarningPackageDao by lazy { database.traceWarningPackageDao() }
 
-    private val warningsStorageDir by lazy {
+    private val warningsCacheDir by lazy {
         File(cacheDir, "trace_warning_packages").apply {
             if (!exists()) {
                 if (mkdirs()) {
@@ -55,7 +55,7 @@ class TraceWarningRepository @Inject constructor(
         }
 
     fun getPathForMetaData(metaData: TraceWarningPackageMetadata): File {
-        return File(warningsStorageDir, metaData.fileName)
+        return File(warningsCacheDir, metaData.fileName)
     }
 
     val allMetaData = dao.getAllMetaData()
@@ -136,7 +136,7 @@ class TraceWarningRepository @Inject constructor(
         Timber.tag(TAG).d("clear()")
         dao.clear()
 
-        if (!warningsStorageDir.deleteRecursively()) {
+        if (!warningsCacheDir.deleteRecursively()) {
             Timber.tag(TAG).e("Failed to delete all TraceWarningPackage files.")
         }
     }
@@ -166,7 +166,7 @@ class TraceWarningRepository @Inject constructor(
         }
 
         // File without owner?
-        warningsStorageDir.listFiles()?.forEach { file ->
+        warningsCacheDir.listFiles()?.forEach { file ->
             val orphan = allMetadata.none { getPathForMetaData(it) == file }
 
             if (orphan && file.delete()) {
