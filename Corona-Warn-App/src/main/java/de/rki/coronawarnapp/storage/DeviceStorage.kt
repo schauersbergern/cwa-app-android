@@ -5,7 +5,6 @@ import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.os.Build
 import android.os.storage.StorageManager
-import android.text.format.Formatter
 import dagger.Reusable
 import de.rki.coronawarnapp.tag
 import de.rki.coronawarnapp.util.BuildVersionWrap
@@ -138,11 +137,7 @@ class DeviceStorage @Inject constructor(
         val requiredBytes: Long = -1L,
         val freeBytes: Long,
         val totalBytes: Long
-    ) {
-
-        fun getFormattedFreeSpace(context: Context): String = Formatter.formatShortFileSize(context, freeBytes)
-        fun getFormattedTotalSpace(context: Context): String = Formatter.formatShortFileSize(context, totalBytes)
-    }
+    )
 
     companion object {
         private val TAG = tag<DeviceStorage>()
