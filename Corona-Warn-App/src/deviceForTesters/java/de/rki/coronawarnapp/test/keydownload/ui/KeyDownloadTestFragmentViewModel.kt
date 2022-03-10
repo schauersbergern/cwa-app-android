@@ -7,28 +7,29 @@ import dagger.assisted.AssistedInject
 import de.rki.coronawarnapp.diagnosiskeys.download.KeyPackageSyncTool
 import de.rki.coronawarnapp.diagnosiskeys.storage.KeyCacheRepository
 import de.rki.coronawarnapp.storage.TestSettings
+import de.rki.coronawarnapp.util.coroutine.AppScope
 import de.rki.coronawarnapp.util.coroutine.DispatcherProvider
 import de.rki.coronawarnapp.util.network.NetworkStateProvider
 import de.rki.coronawarnapp.util.ui.SingleLiveEvent
 import de.rki.coronawarnapp.util.viewmodel.CWAViewModel
 import de.rki.coronawarnapp.util.viewmodel.SimpleCWAViewModelFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.sample
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class KeyDownloadTestFragmentViewModel @AssistedInject constructor(
     dispatcherProvider: DispatcherProvider,
     networkStateProvider: NetworkStateProvider,
+    @AppScope appScope: CoroutineScope,
     private val testSettings: TestSettings,
     private val keyPackageSyncTool: KeyPackageSyncTool,
-    private val keyCacheRepository: KeyCacheRepository
+    private val keyCacheRepository: KeyCacheRepository,
 ) : CWAViewModel(dispatcherProvider = dispatcherProvider) {
 
-    val currentCache = runBlocking {
-        // TODO runBlocking is not nice, how can we solve this better?
-        keyCacheRepository
-            .allCachedKeys()
+    val currentCache = appScope.launch {
+        keyCacheRepository.allCachedKeys()
             .sample(250)
             .map { items ->
                 items
