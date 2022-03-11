@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import de.rki.coronawarnapp.R
+import de.rki.coronawarnapp.bugreporting.ui.toErrorDialogBuilder
 import de.rki.coronawarnapp.databinding.FragmentTestKeydownloadBinding
 import de.rki.coronawarnapp.diagnosiskeys.storage.CachedKeyInfo
 import de.rki.coronawarnapp.test.menu.ui.TestMenuItem
@@ -65,8 +66,10 @@ class KeyDownloadTestFragment : Fragment(R.layout.fragment_test_keydownload), Au
         }
 
         vm.errorEvent.observe2(this) {
-            Snackbar.make(requireView(), it.toString(), Snackbar.LENGTH_LONG).show()
+            it.toErrorDialogBuilder(requireContext()).show()
         }
+
+        binding.downloadTask.setOnClickListener { vm.runDownloadTask() }
     }
 
     companion object {
