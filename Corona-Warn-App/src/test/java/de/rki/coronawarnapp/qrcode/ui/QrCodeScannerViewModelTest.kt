@@ -1,7 +1,7 @@
 package de.rki.coronawarnapp.qrcode.ui
 
 import android.net.Uri
-import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCodeCoordinator
+import de.rki.coronawarnapp.coronatest.qrcode.coordinate.CoronaTestQRCodeCoordinator
 import de.rki.coronawarnapp.coronatest.server.CoronaTestResult
 import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.coronatest.type.pcr.PCRCoronaTest
