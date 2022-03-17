@@ -1,4 +1,4 @@
-package de.rki.coronawarnapp.coronatest.qrcode.coordinate
+package de.rki.coronawarnapp.coronatest.qrcode.handler
 
 import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCode
 import de.rki.coronawarnapp.coronatest.type.CoronaTest

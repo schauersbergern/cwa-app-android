@@ -4,8 +4,8 @@ import android.net.Uri
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCode
-import de.rki.coronawarnapp.coronatest.qrcode.coordinate.CoronaTestQRCodeCoordinator
-import de.rki.coronawarnapp.coronatest.qrcode.coordinate.CoronaTestQRCodeCoordinatorEvent
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeCoordinator
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeCoordinatorEvent
 import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.covidcertificate.common.certificate.DccMaxPersonChecker
 import de.rki.coronawarnapp.covidcertificate.common.qrcode.DccQrCode

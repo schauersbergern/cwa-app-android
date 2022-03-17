@@ -19,7 +19,7 @@ import androidx.transition.TransitionSet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.transition.MaterialContainerTransform
 import de.rki.coronawarnapp.R
-import de.rki.coronawarnapp.coronatest.qrcode.coordinate.RestoreCoronaTestConfirmationDialog
+import de.rki.coronawarnapp.coronatest.qrcode.handler.RestoreCoronaTestConfirmationDialog
 import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.covidcertificate.common.repository.CertificateContainerId
 import de.rki.coronawarnapp.covidcertificate.ui.onboarding.CovidCertificateOnboardingFragment

@@ -1,4 +1,4 @@
-package de.rki.coronawarnapp.coronatest.qrcode.coordinate
+package de.rki.coronawarnapp.coronatest.qrcode.handler
 
 import android.content.Context
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
