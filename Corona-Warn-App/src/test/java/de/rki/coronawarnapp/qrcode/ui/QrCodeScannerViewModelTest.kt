@@ -1,6 +1,7 @@
 package de.rki.coronawarnapp.qrcode.ui
 
 import android.net.Uri
+import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCodeCoordinator
 import de.rki.coronawarnapp.coronatest.server.CoronaTestResult
 import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.coronatest.type.pcr.PCRCoronaTest
@@ -71,6 +72,7 @@ class QrCodeScannerViewModelTest : BaseTest() {
     @MockK lateinit var recycledCertificatesProvider: RecycledCertificatesProvider
     @MockK lateinit var recycledCoronaTestsProvider: RecycledCoronaTestsProvider
     @MockK lateinit var dccMaxPersonChecker: DccMaxPersonChecker
+    @MockK lateinit var coronaTestQRCodeCoordinator: CoronaTestQRCodeCoordinator
 
     private val recycledRAT = RACoronaTest(
         identifier = "rat-identifier",
@@ -440,5 +442,6 @@ class QrCodeScannerViewModelTest : BaseTest() {
         recycledCoronaTestsProvider = recycledCoronaTestsProvider,
         dccTicketingQrCodeHandler = dccTicketingQrCodeHandler,
         dccMaxPersonChecker = dccMaxPersonChecker,
+        coronaTestQRCodeCoordinator = coronaTestQRCodeCoordinator
     )
 }

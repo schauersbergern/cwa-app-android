@@ -4,6 +4,7 @@ import android.net.Uri
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCode
+import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCodeCoordinator
 import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.covidcertificate.common.certificate.DccMaxPersonChecker
 import de.rki.coronawarnapp.covidcertificate.common.qrcode.DccQrCode
@@ -47,7 +48,8 @@ class QrCodeScannerViewModel @AssistedInject constructor(
     private val traceLocationSettings: TraceLocationSettings,
     private val recycledCertificatesProvider: RecycledCertificatesProvider,
     private val recycledCoronaTestsProvider: RecycledCoronaTestsProvider,
-    private val dccMaxPersonChecker: DccMaxPersonChecker
+    private val dccMaxPersonChecker: DccMaxPersonChecker,
+    private val coronaTestQRCodeCoordinator: CoronaTestQRCodeCoordinator
 ) : CWAViewModel(dispatcherProvider) {
 
     val result = SingleLiveEvent<ScannerResult>()
@@ -191,12 +193,10 @@ class QrCodeScannerViewModel @AssistedInject constructor(
 
     private suspend fun onCoronaTestQrCode(qrCode: CoronaTestQRCode) {
         Timber.tag(TAG).d("onCoronaTestQrCode()")
-        val recycledCoronaTest = recycledCoronaTestsProvider.findCoronaTest(qrCode.rawQrCode.toSHA256())
-
-        val coronaTestResult = when {
-            recycledCoronaTest != null -> CoronaTestResult.InRecycleBin(recycledCoronaTest)
-            submissionRepository.testForType(qrCode.type).first() != null -> CoronaTestResult.DuplicateTest(qrCode)
-            else -> CoronaTestResult.ConsentTest(qrCode)
+        val coronaTestResult = when (val result = coronaTestQRCodeCoordinator.handle(coronaTestQRCode = qrCode)) {
+            is CoronaTestQRCodeCoordinator.DuplicateTest -> CoronaTestResult.DuplicateTest(qrCode)
+            is CoronaTestQRCodeCoordinator.InRecycleBin -> CoronaTestResult.InRecycleBin(result.recycledCoronaTest)
+            is CoronaTestQRCodeCoordinator.NeedsConsent -> CoronaTestResult.ConsentTest(qrCode)
         }
         Timber.tag(TAG).d("coronaTestResult=${coronaTestResult::class.simpleName}")
         result.postValue(coronaTestResult)
