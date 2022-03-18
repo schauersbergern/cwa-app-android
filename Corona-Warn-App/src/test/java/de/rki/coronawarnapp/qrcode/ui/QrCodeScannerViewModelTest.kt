@@ -1,9 +1,10 @@
 package de.rki.coronawarnapp.qrcode.ui
 
 import android.net.Uri
-import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeCoordinator
+import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCode
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandler
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandlerEvent
 import de.rki.coronawarnapp.coronatest.server.CoronaTestResult
-import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.coronatest.type.pcr.PCRCoronaTest
 import de.rki.coronawarnapp.coronatest.type.rapidantigen.RACoronaTest
 import de.rki.coronawarnapp.covidcertificate.common.certificate.DccMaxPersonChecker
@@ -29,6 +30,9 @@ import de.rki.coronawarnapp.qrcode.ui.CoronaTestResult.TestNegative
 import de.rki.coronawarnapp.qrcode.ui.CoronaTestResult.TestPending
 import de.rki.coronawarnapp.qrcode.ui.CoronaTestResult.TestPositive
 import de.rki.coronawarnapp.qrcode.ui.CoronaTestResult.WarnOthers
+import de.rki.coronawarnapp.qrcode.ui.CoronaTestResult.InRecycleBin
+import de.rki.coronawarnapp.qrcode.ui.CoronaTestResult.ConsentTest
+import de.rki.coronawarnapp.qrcode.ui.CoronaTestResult.DuplicateTest
 import de.rki.coronawarnapp.reyclebin.coronatest.RecycledCoronaTestsProvider
 import de.rki.coronawarnapp.reyclebin.coronatest.request.toRestoreRecycledTestRequest
 import de.rki.coronawarnapp.reyclebin.covidcertificate.RecycledCertificatesProvider
@@ -45,10 +49,14 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import org.joda.time.Instant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -72,7 +80,9 @@ class QrCodeScannerViewModelTest : BaseTest() {
     @MockK lateinit var recycledCertificatesProvider: RecycledCertificatesProvider
     @MockK lateinit var recycledCoronaTestsProvider: RecycledCoronaTestsProvider
     @MockK lateinit var dccMaxPersonChecker: DccMaxPersonChecker
-    @MockK lateinit var coronaTestQRCodeCoordinator: CoronaTestQRCodeCoordinator
+    @RelaxedMockK lateinit var coronaTestQRCodeHandler: CoronaTestQRCodeHandler
+
+    private lateinit var mutableCoronaTestQRCodeHandlerEvent: MutableSharedFlow<CoronaTestQRCodeHandlerEvent>
 
     private val recycledRAT = RACoronaTest(
         identifier = "rat-identifier",
@@ -117,6 +127,8 @@ class QrCodeScannerViewModelTest : BaseTest() {
     private val rawResult = "rawResult"
     private val parsedResult = QrCodeBoofCVParser.ParseResult.Success(rawResults = setOf(rawResult))
 
+    val coronaTestQRCode = CoronaTestQRCode.PCR(qrCodeGUID = "qrCodeGUID", rawQrCode = "rawQrCode")
+
     @BeforeEach
     fun setup() {
         MockKAnnotations.init(this)
@@ -126,6 +138,9 @@ class QrCodeScannerViewModelTest : BaseTest() {
         coEvery { qrCodeFileParser.decodeQrCodeFile(any()) } returns QrCodeFileParser.ParseResult.Success("qrcode")
         every { recycledCoronaTestsProvider.tests } returns flowOf(emptySet())
         coEvery { recycledCoronaTestsProvider.restoreCoronaTest(any()) } just Runs
+
+        mutableCoronaTestQRCodeHandlerEvent = MutableSharedFlow(extraBufferCapacity = 1)
+        every { coronaTestQRCodeHandler.event } returns mutableCoronaTestQRCodeHandlerEvent.asSharedFlow()
     }
 
     @Test
@@ -182,175 +197,15 @@ class QrCodeScannerViewModelTest : BaseTest() {
         coVerify { recycledCertificatesProvider.restoreCertificate(any()) }
     }
 
-    @Test
-    fun `restoreCoronaTest PCR test when another PCR is active`() {
-        every { submissionRepository.testForType(CoronaTest.Type.PCR) } returns flowOf(anotherPCR)
-        viewModel().apply {
-            restoreCoronaTest(recycledPCR)
-            result.getOrAwaitValue() shouldBe RestoreDuplicateTest(recycledPCR.toRestoreRecycledTestRequest())
-        }
-        coVerify(exactly = 0) { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
+
 
     @Test
-    fun `restoreCoronaTest RAT test when another RAT is active`() {
-        every { submissionRepository.testForType(CoronaTest.Type.RAPID_ANTIGEN) } returns flowOf(anotherRAT)
+    fun `restoreCoronaTest forwards test to CoronaTestQRCodeHandler`() {
+        viewModel().restoreCoronaTest(recycledRAT)
 
-        viewModel().apply {
-            restoreCoronaTest(recycledRAT)
-            result.getOrAwaitValue() shouldBe RestoreDuplicateTest(recycledRAT.toRestoreRecycledTestRequest())
+        coVerify {
+            coronaTestQRCodeHandler.restoreCoronaTest(recycledCoronaTest = recycledRAT)
         }
-        coVerify(exactly = 0) { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest PCR test is pending`() {
-        every { submissionRepository.testForType(CoronaTest.Type.PCR) } returns flowOf(null)
-        val recycledCoronaTest = recycledPCR.copy(testResult = CoronaTestResult.PCR_OR_RAT_PENDING)
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestPending(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest RAT test is pending`() {
-        every { submissionRepository.testForType(CoronaTest.Type.RAPID_ANTIGEN) } returns flowOf(null)
-
-        val recycledCoronaTest = recycledRAT.copy(testResult = CoronaTestResult.PCR_OR_RAT_PENDING)
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestPending(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest PCR test is negative`() {
-        every { submissionRepository.testForType(CoronaTest.Type.PCR) } returns flowOf(null)
-        val recycledCoronaTest = recycledPCR.copy(testResult = CoronaTestResult.PCR_NEGATIVE)
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestNegative(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest RAT test is negative`() {
-        every { submissionRepository.testForType(CoronaTest.Type.RAPID_ANTIGEN) } returns flowOf(null)
-
-        val recycledCoronaTest = recycledRAT.copy(testResult = CoronaTestResult.RAT_NEGATIVE)
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestNegative(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest PCR test is invalid`() {
-        every { submissionRepository.testForType(CoronaTest.Type.PCR) } returns flowOf(null)
-        val recycledCoronaTest = recycledPCR.copy(testResult = CoronaTestResult.PCR_INVALID)
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestInvalid(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest RAT test is invalid`() {
-        every { submissionRepository.testForType(CoronaTest.Type.RAPID_ANTIGEN) } returns flowOf(null)
-
-        val recycledCoronaTest = recycledRAT.copy(testResult = CoronaTestResult.RAT_INVALID)
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestInvalid(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest PCR test is positive - warn other consent given`() {
-        every { submissionRepository.testForType(CoronaTest.Type.PCR) } returns flowOf(null)
-        val recycledCoronaTest = recycledPCR.copy(
-            testResult = CoronaTestResult.PCR_POSITIVE,
-            isAdvancedConsentGiven = true
-        )
-
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestPositive(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest RAT test is positive - warn other consent given`() {
-        every { submissionRepository.testForType(CoronaTest.Type.RAPID_ANTIGEN) } returns flowOf(null)
-
-        val recycledCoronaTest = recycledRAT.copy(
-            testResult = CoronaTestResult.RAT_POSITIVE,
-            isAdvancedConsentGiven = true
-        )
-
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe TestPositive(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest PCR test is positive - warn other consent not given`() {
-        every { submissionRepository.testForType(CoronaTest.Type.PCR) } returns flowOf(null)
-        val recycledCoronaTest = recycledPCR.copy(
-            testResult = CoronaTestResult.PCR_POSITIVE,
-            isAdvancedConsentGiven = false
-        )
-
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe WarnOthers(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest RAT test is positive - warn other consent not given`() {
-        every { submissionRepository.testForType(CoronaTest.Type.RAPID_ANTIGEN) } returns flowOf(null)
-
-        val recycledCoronaTest = recycledRAT.copy(
-            testResult = CoronaTestResult.RAT_POSITIVE,
-            isAdvancedConsentGiven = false
-        )
-
-        viewModel().apply {
-            restoreCoronaTest(recycledCoronaTest)
-            result.getOrAwaitValue() shouldBe WarnOthers(recycledCoronaTest)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest PCR test is not pending`() {
-        every { submissionRepository.testForType(CoronaTest.Type.PCR) } returns flowOf(null)
-        viewModel().apply {
-            restoreCoronaTest(recycledPCR)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
-    }
-
-    @Test
-    fun `restoreCoronaTest RAT test is not pending`() {
-        every { submissionRepository.testForType(CoronaTest.Type.RAPID_ANTIGEN) } returns flowOf(null)
-
-        viewModel().apply {
-            restoreCoronaTest(recycledRAT)
-        }
-        coVerify { recycledCoronaTestsProvider.restoreCoronaTest(any()) }
     }
 
     @Test
@@ -429,19 +284,91 @@ class QrCodeScannerViewModelTest : BaseTest() {
         }
     }
 
+    @Test
+    fun `calls CoronaTestQRCodeHandler with CoronaTestQRCode`() {
+        val rawString = "CoronaTestQrCode"
+        coEvery { qrCodeValidator.validate(rawString = rawString) } returns coronaTestQRCode
+
+        val result = QrCodeBoofCVParser.ParseResult.Success(rawResults = setOf(rawString))
+
+        with(viewModel()) {
+            onParseResult(parseResult = result)
+
+            coVerify {
+                coronaTestQRCodeHandler.handle(coronaTestQRCode = coronaTestQRCode)
+            }
+        }
+    }
+
+    @Test
+    fun `maps CoronaTestQRCodeHandlerEvent to corresponding result`() = runBlocking {
+        with(viewModel()) {
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.DuplicateTest(coronaTestQRCode),
+                expectedResult = DuplicateTest(coronaTestQRCode)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.InRecycleBin(recycledPCR),
+                expectedResult = InRecycleBin(recycledPCR)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.NeedsConsent(coronaTestQRCode),
+                expectedResult = ConsentTest(coronaTestQRCode)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.TestNegative(anotherPCR),
+                expectedResult = TestNegative(anotherPCR)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.TestPending(recycledRAT),
+                expectedResult = TestPending(recycledRAT)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.TestPositive(anotherRAT),
+                expectedResult = TestPositive(anotherRAT)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.TestInvalid(anotherRAT),
+                expectedResult = TestInvalid(anotherRAT)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.WarnOthers(anotherPCR),
+                expectedResult = WarnOthers(anotherPCR)
+            )
+
+            checkEvent(
+                event = CoronaTestQRCodeHandlerEvent.RestoreDuplicateTest(recycledPCR.toRestoreRecycledTestRequest()),
+                expectedResult = RestoreDuplicateTest(recycledPCR.toRestoreRecycledTestRequest())
+            )
+        }
+    }
+
+    private suspend fun QrCodeScannerViewModel.checkEvent(
+        event: CoronaTestQRCodeHandlerEvent,
+        expectedResult: ScannerResult
+    ) {
+        mutableCoronaTestQRCodeHandlerEvent.emit(event)
+        result.getOrAwaitValue() shouldBe expectedResult
+    }
+
     fun viewModel() = QrCodeScannerViewModel(
         qrCodeFileParser = qrCodeFileParser,
         dccHandler = dccHandler,
-        submissionRepository = submissionRepository,
         checkInHandler = checkInHandler,
         dccSettings = dccSettings,
         traceLocationSettings = traceLocationSettings,
         dispatcherProvider = TestDispatcherProvider(),
         qrCodeValidator = qrCodeValidator,
         recycledCertificatesProvider = recycledCertificatesProvider,
-        recycledCoronaTestsProvider = recycledCoronaTestsProvider,
         dccTicketingQrCodeHandler = dccTicketingQrCodeHandler,
         dccMaxPersonChecker = dccMaxPersonChecker,
-        coronaTestQRCodeCoordinator = coronaTestQRCodeCoordinator
+        coronaTestQRCodeHandler = coronaTestQRCodeHandler
     )
 }
