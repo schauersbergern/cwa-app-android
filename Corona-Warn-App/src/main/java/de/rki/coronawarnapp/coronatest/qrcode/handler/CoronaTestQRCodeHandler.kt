@@ -18,7 +18,7 @@ class CoronaTestQRCodeHandler @Inject constructor(
     private val submissionRepository: SubmissionRepository
 ) {
 
-    private val mutableEvent = MutableSharedFlow<CoronaTestQRCodeHandlerEvent>(extraBufferCapacity = 1)
+    private val mutableEvent = MutableSharedFlow<CoronaTestQRCodeHandlerEvent>(replay = 1)
     val event = mutableEvent.asSharedFlow()
 
     suspend fun handle(coronaTestQRCode: CoronaTestQRCode) {
