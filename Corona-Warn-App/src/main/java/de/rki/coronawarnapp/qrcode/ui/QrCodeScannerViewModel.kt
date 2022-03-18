@@ -195,6 +195,9 @@ class QrCodeScannerViewModel @AssistedInject constructor(
         is CoronaTestQRCodeHandlerEvent.RestoreDuplicateTest -> CoronaTestResult.RestoreDuplicateTest(
             restoreRecycledTestRequest
         )
+
+     
+
     }
 
     @AssistedFactory
