@@ -3,20 +3,22 @@ package de.rki.coronawarnapp.util.flow
 import de.rki.coronawarnapp.util.mutate
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.instanceOf
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import testhelpers.BaseTest
 import testhelpers.coroutines.runBlockingTest2
@@ -29,71 +31,80 @@ class HotDataFlowTest : BaseTest() {
 
     // Without an init value, there isn't a way to keep using the flow
     @Test
-    fun `exceptions on initialization are rethrown`() {
-        val testScope = TestScope()
-        val hotData = HotDataFlow<String>(
-            loggingTag = "tag",
-            scope = testScope,
-            coroutineContext = Dispatchers.Unconfined,
-            startValueProvider = { throw IOException() }
-        )
-        runBlocking {
-            withTimeoutOrNull(500) {
-                // This blocking scope get's the init exception as the first caller
-                hotData.data.firstOrNull()
-            } shouldBe null
+    fun `exceptions on initialization are rethrown`() = runTest {
+
+        val exceptions = mutableListOf<Throwable>()
+        val customCaptor = CoroutineExceptionHandler { ctx, throwable ->
+            exceptions.add(throwable)
         }
 
-        testScope.advanceUntilIdle()
+        val testScope = this
 
-        TODO("FixMe")
+        launch(customCaptor) {
+            val hotData = HotDataFlow<String>(
+                loggingTag = "tag",
+                scope = this,
+                coroutineContext = this.coroutineContext,
+                startValueProvider = { throw IOException() }
+            )
+
+            hotData.data.firstOrNull() shouldBe null
+
+            /*withTimeoutOrNull(500) {
+                // This blocking scope get's the init exception as the first caller
+                hotData.data.firstOrNull()
+            } shouldBe null*/
+        }
+
+        advanceUntilIdle()
+
+        exceptions.first() shouldBe instanceOf(IOException::class)
+
+        // testScope.advanceUntilIdle()
+
+        // TODO("FixMe")
         // testScope.uncaughtExceptions.single() shouldBe instanceOf(IOException::class)
     }
 
     @Test
-    fun `subscription ends when no subscriber is collecting, mode WhileSubscribed`() {
-        val testScope = TestScope()
+    fun `subscription ends when no subscriber is collecting, mode WhileSubscribed`() = runTest() {
+
         val valueProvider = mockk<suspend CoroutineScope.() -> String>()
         coEvery { valueProvider.invoke(any()) } returns "Test"
 
         val hotData = HotDataFlow(
             loggingTag = "tag",
-            scope = testScope,
-            coroutineContext = Dispatchers.Unconfined,
+            scope = this,
+            coroutineContext = this.testScheduler,
             startValueProvider = valueProvider,
             sharingBehavior = SharingStarted.WhileSubscribed()
         )
 
-        testScope.apply {
-            runBlockingTest2(ignoreActive = true) {
-                hotData.data.first() shouldBe "Test"
-                hotData.data.first() shouldBe "Test"
-            }
-            coVerify(exactly = 2) { valueProvider.invoke(any()) }
-        }
+        hotData.data.first() shouldBe "Test"
+        hotData.data.first() shouldBe "Test"
+
+        coVerify(exactly = 2) { valueProvider.invoke(any()) }
     }
 
     @Test
-    fun `subscription doesn't end when no subscriber is collecting, mode Lazily`() {
-        val testScope = TestScope()
+    fun `subscription doesn't end when no subscriber is collecting, mode Lazily`() = runTest {
         val valueProvider = mockk<suspend CoroutineScope.() -> String>()
         coEvery { valueProvider.invoke(any()) } returns "Test"
 
         val hotData = HotDataFlow(
             loggingTag = "tag",
-            scope = testScope,
-            coroutineContext = Dispatchers.Unconfined,
+            scope = this,
+            coroutineContext = this.coroutineContext,
             startValueProvider = valueProvider,
             sharingBehavior = SharingStarted.Lazily
         )
 
-        testScope.apply {
-            runBlockingTest2(ignoreActive = true) {
-                hotData.data.first() shouldBe "Test"
-                hotData.data.first() shouldBe "Test"
-            }
-            coVerify(exactly = 1) { valueProvider.invoke(any()) }
-        }
+        hotData.data.first() shouldBe "Test"
+        hotData.data.first() shouldBe "Test"
+
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { valueProvider.invoke(any()) }
     }
 
     @Test

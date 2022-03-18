@@ -10,14 +10,19 @@ import de.rki.coronawarnapp.util.HashExtensions.toSHA256
 import de.rki.coronawarnapp.util.TimeAndDateExtensions.toLocalDateUtc
 import io.kotest.matchers.shouldBe
 import io.mockk.MockKAnnotations
+import io.mockk.Runs
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.joda.time.Instant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -116,7 +121,9 @@ class PersonCertificatesProviderTest : BaseTest() {
     )
 
     @Test
-    fun `empty data`() = runBlockingTest2(ignoreActive = true) {
+    fun `empty data`() = runTest {
+        coEvery { personCertificatesSettings.removeCurrentCwaUser() } just Runs
+
         val emptyCertificateContainer = CertificateProvider.CertificateContainer(
             recoveryCertificates = emptySet(),
             testCertificates = emptySet(),
@@ -127,11 +134,13 @@ class PersonCertificatesProviderTest : BaseTest() {
 
         val instance = createInstance(this)
 
-        instance.personCertificates.first() shouldBe emptyList()
+        instance.personCertificates.first() shouldBe emptySet()
 
         verify {
             certificateProvider.certificateContainer
         }
+
+        advanceUntilIdle()
     }
 
     @Test

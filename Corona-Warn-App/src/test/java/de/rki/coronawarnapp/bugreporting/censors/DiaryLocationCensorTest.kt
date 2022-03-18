@@ -11,6 +11,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -60,6 +61,9 @@ class DiaryLocationCensorTest : BaseTest() {
             Both agreed that their emails (bürgermeister@münchen.de|karl@aachen.de) are awesome,
             and that Bielefeld doesn't exist as it has neither phonenumber (null) nor email (null).
             """.trimIndent()
+
+        advanceUntilIdle()
+
         instance.checkLog(censorMe)!!.compile()!!.censored shouldBe
             """
             Bürgermeister of Location#1/Name (Location#1/PhoneNumber) and Karl of Location#3/Name [Location#3/PhoneNumber] called each other.
@@ -84,6 +88,9 @@ class DiaryLocationCensorTest : BaseTest() {
         )
 
         val instance = createInstance(this)
+
+        advanceUntilIdle() //
+
         val censorMe =
             """
             Bürgermeister of Munich (+49 089 3333) and Karl of Aachen [+49 0241 9999] called each other.

@@ -13,14 +13,15 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import testhelpers.BaseTest
-import testhelpers.asDispatcherProvider
+import testhelpers.NewTestDispatcherProvider
 import testhelpers.coroutines.runBlockingTest2
 import testhelpers.coroutines.test
 import java.io.IOException
@@ -56,19 +57,20 @@ class StatisticsProviderTest : BaseTest() {
         }
     }
 
-    fun createInstance(scope: CoroutineScope) = StatisticsProvider(
+    fun createInstance(scope: TestScope) = StatisticsProvider(
         server = server,
         scope = scope,
         localCache = localCache,
         parser = parser,
         foregroundState = foregroundState,
-        dispatcherProvider = scope.asDispatcherProvider()
+        dispatcherProvider = NewTestDispatcherProvider(scope)
     )
 
     @Test
-    fun `creation is sideeffect free`() = runBlockingTest2(ignoreActive = true) {
+    fun `creation is sideeffect free`() = runTest {
         createInstance(this)
         verify(exactly = 0) { localCache.load() }
+        advanceUntilIdle()
     }
 
     @Test
