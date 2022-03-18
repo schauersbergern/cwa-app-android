@@ -4,8 +4,8 @@ import android.net.Uri
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCode
-import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeCoordinator
-import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeCoordinatorEvent
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandler
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandlerEvent
 import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.covidcertificate.common.certificate.DccMaxPersonChecker
 import de.rki.coronawarnapp.covidcertificate.common.qrcode.DccQrCode
@@ -45,7 +45,7 @@ class QrCodeScannerViewModel @AssistedInject constructor(
     private val traceLocationSettings: TraceLocationSettings,
     private val recycledCertificatesProvider: RecycledCertificatesProvider,
     private val dccMaxPersonChecker: DccMaxPersonChecker,
-    private val coronaTestQRCodeCoordinator: CoronaTestQRCodeCoordinator
+    private val coronaTestQRCodeHandler: CoronaTestQRCodeHandler
 ) : CWAViewModel(dispatcherProvider) {
 
     val result = SingleLiveEvent<ScannerResult>()
@@ -128,7 +128,7 @@ class QrCodeScannerViewModel @AssistedInject constructor(
 
     fun restoreCoronaTest(recycledCoronaTest: CoronaTest) = launch {
         Timber.tag(TAG).d("restoreCoronaTest(recycledCoronaTest=%s)", recycledCoronaTest)
-        coronaTestQRCodeCoordinator.restoreCoronaTest(recycledCoronaTest = recycledCoronaTest)
+        coronaTestQRCodeHandler.restoreCoronaTest(recycledCoronaTest = recycledCoronaTest)
     }
 
     private suspend fun onDccQrCode(dccQrCode: DccQrCode) {
@@ -172,27 +172,27 @@ class QrCodeScannerViewModel @AssistedInject constructor(
 
     private suspend fun onCoronaTestQrCode(qrCode: CoronaTestQRCode) {
         Timber.tag(TAG).d("onCoronaTestQrCode()")
-        coronaTestQRCodeCoordinator.handle(coronaTestQRCode = qrCode)
+        coronaTestQRCodeHandler.handle(coronaTestQRCode = qrCode)
     }
 
     private fun bindCoronaTestQRCodeCoordinatorEvent() {
         Timber.tag(TAG).d("bindCoronaTestQRCodeCoordinatorEvent()")
-        coronaTestQRCodeCoordinator.event
+        coronaTestQRCodeHandler.event
             .map { it.toCoronaTestResult() }
             .onEach { result.postValue(it) }
             .launchInViewModel()
     }
 
-    private fun CoronaTestQRCodeCoordinatorEvent.toCoronaTestResult(): CoronaTestResult = when (this) {
-        is CoronaTestQRCodeCoordinatorEvent.DuplicateTest -> CoronaTestResult.DuplicateTest(coronaTestQRCode)
-        is CoronaTestQRCodeCoordinatorEvent.InRecycleBin -> CoronaTestResult.InRecycleBin(recycledCoronaTest)
-        is CoronaTestQRCodeCoordinatorEvent.NeedsConsent -> CoronaTestResult.ConsentTest(coronaTestQRCode)
-        is CoronaTestQRCodeCoordinatorEvent.TestInvalid -> CoronaTestResult.TestInvalid(test)
-        is CoronaTestQRCodeCoordinatorEvent.TestNegative -> CoronaTestResult.TestNegative(test)
-        is CoronaTestQRCodeCoordinatorEvent.TestPending -> CoronaTestResult.TestPending(test)
-        is CoronaTestQRCodeCoordinatorEvent.TestPositive -> CoronaTestResult.TestPositive(test)
-        is CoronaTestQRCodeCoordinatorEvent.WarnOthers -> CoronaTestResult.WarnOthers(test)
-        is CoronaTestQRCodeCoordinatorEvent.RestoreDuplicateTest -> CoronaTestResult.RestoreDuplicateTest(
+    private fun CoronaTestQRCodeHandlerEvent.toCoronaTestResult(): CoronaTestResult = when (this) {
+        is CoronaTestQRCodeHandlerEvent.DuplicateTest -> CoronaTestResult.DuplicateTest(coronaTestQRCode)
+        is CoronaTestQRCodeHandlerEvent.InRecycleBin -> CoronaTestResult.InRecycleBin(recycledCoronaTest)
+        is CoronaTestQRCodeHandlerEvent.NeedsConsent -> CoronaTestResult.ConsentTest(coronaTestQRCode)
+        is CoronaTestQRCodeHandlerEvent.TestInvalid -> CoronaTestResult.TestInvalid(test)
+        is CoronaTestQRCodeHandlerEvent.TestNegative -> CoronaTestResult.TestNegative(test)
+        is CoronaTestQRCodeHandlerEvent.TestPending -> CoronaTestResult.TestPending(test)
+        is CoronaTestQRCodeHandlerEvent.TestPositive -> CoronaTestResult.TestPositive(test)
+        is CoronaTestQRCodeHandlerEvent.WarnOthers -> CoronaTestResult.WarnOthers(test)
+        is CoronaTestQRCodeHandlerEvent.RestoreDuplicateTest -> CoronaTestResult.RestoreDuplicateTest(
             restoreRecycledTestRequest
         )
     }
