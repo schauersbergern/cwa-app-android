@@ -8,7 +8,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.joda.time.format.DateTimeFormat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -66,7 +66,7 @@ internal class RatProfileCensorTest : BaseTest() {
     }
 
     @Test
-    fun `censoring should still work after the user deletes his profile`() = runBlockingTest {
+    fun `censoring should still work after the user deletes his profile`() = runTest {
         every { ratProfileSettings.profileFlow } returns flowOf(profile, null)
 
         val censor = createInstance()
@@ -81,7 +81,7 @@ internal class RatProfileCensorTest : BaseTest() {
     }
 
     @Test
-    fun `self overlap`() = runBlockingTest {
+    fun `self overlap`() = runTest {
         val selfOverlap = profile.copy(
             lastName = "Berlin",
             city = "Berlin Kreuzberg"

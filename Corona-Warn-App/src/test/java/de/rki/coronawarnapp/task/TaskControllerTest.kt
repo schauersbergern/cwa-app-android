@@ -36,7 +36,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.joda.time.Instant
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -96,7 +97,7 @@ class TaskControllerTest : BaseIOTest() {
     )
 
     @Test
-    fun `side effect free init`() = runBlockingTest {
+    fun `side effect free init`() = runTest {
         shouldNotThrowAny {
             val instance = createInstance(scope = this)
             instance.close()
@@ -104,7 +105,7 @@ class TaskControllerTest : BaseIOTest() {
     }
 
     @Test
-    fun `missing task factory throw exception`() = runBlockingTest {
+    fun `missing task factory throw exception`() = runTest {
         val instance = createInstance(scope = this)
 
         val unknownTask = DefaultTaskRequest(
@@ -120,7 +121,7 @@ class TaskControllerTest : BaseIOTest() {
     }
 
     @Test
-    fun `task map is empty by default`() = runBlockingTest {
+    fun `task map is empty by default`() = runTest {
         val instance = createInstance(scope = this)
 
         val map = instance.tasks.take(1).toList().single()

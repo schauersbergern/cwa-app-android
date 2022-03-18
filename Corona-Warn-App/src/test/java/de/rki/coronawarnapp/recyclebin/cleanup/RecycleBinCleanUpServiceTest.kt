@@ -3,9 +3,9 @@ package de.rki.coronawarnapp.recyclebin.cleanup
 import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.covidcertificate.common.certificate.CwaCovidCertificate
 import de.rki.coronawarnapp.covidcertificate.common.repository.CertificateContainerId
-import de.rki.coronawarnapp.reyclebin.covidcertificate.RecycledCertificatesProvider
 import de.rki.coronawarnapp.reyclebin.cleanup.RecycleBinCleanUpService
 import de.rki.coronawarnapp.reyclebin.coronatest.RecycledCoronaTestsProvider
+import de.rki.coronawarnapp.reyclebin.covidcertificate.RecycledCertificatesProvider
 import de.rki.coronawarnapp.util.TimeStamper
 import io.mockk.MockKAnnotations
 import io.mockk.coVerify
@@ -14,7 +14,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.joda.time.Days
 import org.joda.time.Instant
 import org.junit.jupiter.api.BeforeEach
@@ -60,7 +60,7 @@ class RecycleBinCleanUpServiceTest : BaseTest() {
     }
 
     @Test
-    fun `No recycled items, nothing to delete`() = runBlockingTest {
+    fun `No recycled items, nothing to delete`() = runTest {
         every { recycledCertificatesProvider.recycledCertificates } returns flowOf(emptySet())
         every { recycledCoronaTestsProvider.tests } returns flowOf(emptySet())
 
@@ -73,7 +73,7 @@ class RecycleBinCleanUpServiceTest : BaseTest() {
     }
 
     @Test
-    fun `Retention time in recycle bin too short, nothing to delete`() = runBlockingTest {
+    fun `Retention time in recycle bin too short, nothing to delete`() = runTest {
         val certWith0DaysOfRetention = createCert(0)
         val certWith30DaysOfRetention = createCert(30)
         val testWith0DaysOfRetention = createTest(0)
@@ -96,7 +96,7 @@ class RecycleBinCleanUpServiceTest : BaseTest() {
     }
 
     @Test
-    fun `Time difference between recycledAt and now is greater than 30 days with ms precision`() = runBlockingTest {
+    fun `Time difference between recycledAt and now is greater than 30 days with ms precision`() = runTest {
         val nowMinus30Days = now.minus(Days.days(30).toStandardDuration())
         val nowMinus30DaysAnd1Ms = nowMinus30Days.minus(1)
 

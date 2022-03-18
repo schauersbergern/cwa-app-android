@@ -19,7 +19,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -79,17 +79,19 @@ internal class OrganizerSubmissionServerTest : BaseTest() {
     }
 
     @Test
-    fun submit() = runBlockingTest {
+    fun submit() = runTest {
         createServer(appConfigProvider, organizerSubmissionApiV1).submit("uploadTan", checkInsReport)
     }
 
     @Test
-    fun `forwards exceptions`() = runBlockingTest {
+    fun `forwards exceptions`() = runTest {
         val server = createServer(appConfigProvider, organizerSubmissionApiV1)
         val errorDetails = "errorDetails"
         val uploadTan = "uploadTan"
 
-        coEvery { organizerSubmissionApiV1.submitCheckInsOnBehalf(any(), any()) } throws BadRequestException(errorDetails)
+        coEvery { organizerSubmissionApiV1.submitCheckInsOnBehalf(any(), any()) } throws BadRequestException(
+            errorDetails
+        )
 
         assertThrows<BadRequestException> {
             server.submit(uploadTan, checkInsReport)

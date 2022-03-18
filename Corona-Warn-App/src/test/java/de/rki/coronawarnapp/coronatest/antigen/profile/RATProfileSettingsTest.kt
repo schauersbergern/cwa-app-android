@@ -6,10 +6,10 @@ import io.kotest.matchers.shouldBe
 import io.mockk.MockKAnnotations
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.joda.time.format.DateTimeFormat
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import testhelpers.BaseTest
 import testhelpers.extensions.toComparableJsonPretty
 import testhelpers.preferences.FakeDataStore
@@ -112,7 +112,7 @@ internal class RATProfileSettingsTest : BaseTest() {
     }
 
     @Test
-    fun `Clear profile settings`() = runBlockingTest {
+    fun `Clear profile settings`() = runTest {
         ratProfileSettings.updateProfile(profile)
         ratProfileSettings.setOnboarded()
         ratProfileSettings.clear()

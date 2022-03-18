@@ -29,7 +29,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.joda.time.Instant
 import org.junit.Before
 import org.junit.Test
@@ -97,7 +97,7 @@ class PCRResultRetrievalWorkerTest : BaseTest() {
     )
 
     @Test
-    fun testSuccess() = runBlockingTest {
+    fun testSuccess() = runTest {
         coronaTestFlow.value = setOf(newCoronaTest())
 
         val result = createWorker().doWork()
@@ -107,7 +107,7 @@ class PCRResultRetrievalWorkerTest : BaseTest() {
     }
 
     @Test
-    fun testRetryWhenExceptionIsThrown() = runBlockingTest {
+    fun testRetryWhenExceptionIsThrown() = runTest {
         coronaTestFlow.value = setOf(newCoronaTest())
         coEvery { coronaTestRepository.refresh(any()) } throws Exception()
 

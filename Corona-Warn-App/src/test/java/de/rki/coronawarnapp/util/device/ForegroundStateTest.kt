@@ -7,7 +7,8 @@ import io.kotest.matchers.shouldBe
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -33,7 +34,7 @@ class ForegroundStateTest : BaseTest() {
     )
 
     @Test
-    fun `test emissions`() = runBlockingTest {
+    fun `test emissions`() = runTest {
         val instance = createInstance()
 
         val testCollector = instance.isInForeground.test(startOnScope = this)

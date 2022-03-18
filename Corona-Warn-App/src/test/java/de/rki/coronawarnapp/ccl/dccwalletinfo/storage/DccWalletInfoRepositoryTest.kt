@@ -15,7 +15,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -36,12 +36,12 @@ internal class DccWalletInfoRepositoryTest : BaseTest() {
     }
 
     @Test
-    fun getDccWalletInfo() = runBlockingTest {
+    fun getDccWalletInfo() = runTest {
         repo(this).personWallets.first() shouldBe listOf()
     }
 
     @Test
-    fun save() = runBlockingTest {
+    fun save() = runTest {
         val personId = CertificatePersonIdentifier(
             firstNameStandardized = "Erika",
             lastNameStandardized = "MusterFrau",
@@ -57,7 +57,7 @@ internal class DccWalletInfoRepositoryTest : BaseTest() {
     }
 
     @Test
-    fun clear() = runBlockingTest {
+    fun clear() = runTest {
         repo(this).clear()
         coVerify {
             dao.deleteAll()
@@ -65,7 +65,7 @@ internal class DccWalletInfoRepositoryTest : BaseTest() {
     }
 
     @Test
-    fun delete() = runBlockingTest {
+    fun delete() = runTest {
         repo(this).delete(setOf("id"))
         coVerify {
             dao.deleteBy(any())

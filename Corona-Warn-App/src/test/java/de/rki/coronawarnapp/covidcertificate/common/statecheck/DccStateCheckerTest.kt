@@ -21,7 +21,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.joda.time.Duration
 import org.joda.time.Instant
 import org.junit.jupiter.api.BeforeEach
@@ -67,7 +67,7 @@ class DccStateCheckerTest : BaseTest() {
     )
 
     @Test
-    fun `state is valid`() = runBlockingTest {
+    fun `state is valid`() = runTest {
         val state = CwaCovidCertificate.State.Valid(expiresAt = Instant.EPOCH)
         coEvery { expirationChecker.getExpirationState(any(), any(), any()) } returns state
 
@@ -84,7 +84,7 @@ class DccStateCheckerTest : BaseTest() {
     }
 
     @Test
-    fun `state is expiring soon`() = runBlockingTest {
+    fun `state is expiring soon`() = runTest {
         val state = CwaCovidCertificate.State.ExpiringSoon(expiresAt = Instant.EPOCH)
         coEvery { expirationChecker.getExpirationState(any(), any(), any()) } returns state
 
@@ -94,7 +94,7 @@ class DccStateCheckerTest : BaseTest() {
     }
 
     @Test
-    fun `state is expired`() = runBlockingTest {
+    fun `state is expired`() = runTest {
         val state = CwaCovidCertificate.State.Expired(expiredAt = Instant.EPOCH)
         coEvery { expirationChecker.getExpirationState(any(), any(), any()) } returns state
 
@@ -104,7 +104,7 @@ class DccStateCheckerTest : BaseTest() {
     }
 
     @Test
-    fun `invalid signature and expires soon`() = runBlockingTest {
+    fun `invalid signature and expires soon`() = runTest {
         coEvery { dscSignatureValidator.validateSignature(any(), any(), any()) } throws Exception()
         val state = CwaCovidCertificate.State.ExpiringSoon(expiresAt = Instant.EPOCH)
         coEvery { expirationChecker.getExpirationState(any(), any(), any()) } returns state
@@ -115,7 +115,7 @@ class DccStateCheckerTest : BaseTest() {
     }
 
     @Test
-    fun `invalid signature and expired`() = runBlockingTest {
+    fun `invalid signature and expired`() = runTest {
         coEvery { dscSignatureValidator.validateSignature(any(), any(), any()) } throws Exception()
         val state = CwaCovidCertificate.State.Expired(expiredAt = Instant.EPOCH)
         coEvery { expirationChecker.getExpirationState(any(), any(), any()) } returns state

@@ -5,7 +5,7 @@ import de.rki.coronawarnapp.util.TimeAndDateExtensions.seconds
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.joda.time.Instant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,7 +23,7 @@ internal class CclSettingsTest : BaseTest() {
     }
 
     @Test
-    fun `test CclSettings - set last execution value and clear it again`() = runBlockingTest {
+    fun `test CclSettings - set last execution value and clear it again`() = runTest {
         cclSettings.getLastExecutionTime() shouldBe null
 
         val now = Instant.parse("2022-04-02T00:00:00.000Z")
@@ -37,7 +37,7 @@ internal class CclSettingsTest : BaseTest() {
     }
 
     @Test
-    fun `test CclSettings - set admission scenario identifier`() = runBlockingTest {
+    fun `test CclSettings - set admission scenario identifier`() = runTest {
         cclSettings.getAdmissionScenarioId() shouldBe ""
 
         cclSettings.setAdmissionScenarioId("Ad-Sc-ID")
@@ -50,7 +50,7 @@ internal class CclSettingsTest : BaseTest() {
     }
 
     @Test
-    fun `test CclSettings - set admission check scenarios`() = runBlockingTest {
+    fun `test CclSettings - set admission check scenarios`() = runTest {
         cclSettings.admissionCheckScenarios.first() shouldBe null
 
         cclSettings.setAdmissionCheckScenarios(scenariosJson)
