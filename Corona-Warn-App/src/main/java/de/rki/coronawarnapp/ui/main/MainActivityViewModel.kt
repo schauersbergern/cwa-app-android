@@ -7,8 +7,11 @@ import dagger.assisted.AssistedInject
 import de.rki.coronawarnapp.contactdiary.ui.ContactDiarySettings
 import de.rki.coronawarnapp.coronatest.CoronaTestRepository
 import de.rki.coronawarnapp.coronatest.qrcode.CoronaTestQRCode
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandler
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandlerEvent
 import de.rki.coronawarnapp.coronatest.qrcode.rapid.RapidAntigenQrCodeExtractor
 import de.rki.coronawarnapp.coronatest.qrcode.rapid.RapidPcrQrCodeExtractor
+import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.covidcertificate.person.core.PersonCertificatesProvider
 import de.rki.coronawarnapp.covidcertificate.vaccination.core.CovidCertificateSettings
 import de.rki.coronawarnapp.covidcertificate.valueset.ValueSetsRepository
@@ -19,7 +22,6 @@ import de.rki.coronawarnapp.presencetracing.checkins.CheckInRepository
 import de.rki.coronawarnapp.qrcode.scanner.QrCodeExtractor
 import de.rki.coronawarnapp.storage.OnboardingSettings
 import de.rki.coronawarnapp.storage.TracingSettings
-import de.rki.coronawarnapp.submission.SubmissionRepository
 import de.rki.coronawarnapp.ui.main.home.MainActivityEvent
 import de.rki.coronawarnapp.ui.presencetracing.attendee.checkins.CheckInsFragment
 import de.rki.coronawarnapp.util.CWADebug
@@ -31,6 +33,7 @@ import de.rki.coronawarnapp.util.viewmodel.SimpleCWAViewModelFactory
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 
 @Suppress("LongParameterList")
@@ -45,7 +48,7 @@ class MainActivityViewModel @AssistedInject constructor(
     private val covidCertificateSettings: CovidCertificateSettings,
     private val raExtractor: RapidAntigenQrCodeExtractor,
     private val rPcrExtractor: RapidPcrQrCodeExtractor,
-    private val submissionRepository: SubmissionRepository,
+    private val coronaTestQRCodeHandler: CoronaTestQRCodeHandler,
     coronaTestRepository: CoronaTestRepository,
     checkInRepository: CheckInRepository,
     personCertificatesProvider: PersonCertificatesProvider,
@@ -85,6 +88,9 @@ class MainActivityViewModel @AssistedInject constructor(
             .plus(if (showBadge) 1 else 0)
     }.asLiveData2()
 
+    private val mutableCoronaTestQrEvent = SingleLiveEvent<CoronaTestQRCodeHandlerEvent>()
+    val coronaTestQrEvent: LiveData<CoronaTestQRCodeHandlerEvent> = mutableCoronaTestQrEvent
+
     init {
         if (CWADebug.isDeviceForTestersBuild) {
             launch {
@@ -107,6 +113,8 @@ class MainActivityViewModel @AssistedInject constructor(
                 }
             }
         }
+
+        bindCoronaTestQRCodeCoordinatorEvent()
     }
 
     fun doBackgroundNoiseCheck() {
@@ -145,14 +153,14 @@ class MainActivityViewModel @AssistedInject constructor(
 
     private suspend fun QrCodeExtractor<CoronaTestQRCode>.handleCoronaTestQr(uriString: String) = try {
         val qrCode = extract(rawString = uriString)
-        val test = submissionRepository.testForType(qrCode.type).first()
-        when {
-            test != null -> event.postValue(MainActivityEvent.GoToDeletionScreen(qrCode))
-            else -> event.postValue(MainActivityEvent.GoToSubmissionConsentFragment(qrCode))
-        }
+        coronaTestQRCodeHandler.handle(coronaTestQRCode = qrCode)
     } catch (e: Exception) {
         Timber.w(e, "onNavigationUri failed")
         event.postValue(MainActivityEvent.Error(e))
+    }
+
+    fun restoreCoronaTest(recycledCoronaTest: CoronaTest) = launch {
+        coronaTestQRCodeHandler.restoreCoronaTest(recycledCoronaTest = recycledCoronaTest)
     }
 
     fun openScanner() = launch {
@@ -161,6 +169,12 @@ class MainActivityViewModel @AssistedInject constructor(
 
     fun dismissTooltip() {
         onboardingSettings.fabScannerOnboardingDone.update { true }
+    }
+
+    private fun bindCoronaTestQRCodeCoordinatorEvent() {
+        coronaTestQRCodeHandler.event
+            .onEach { mutableCoronaTestQrEvent.postValue(it) }
+            .launchInViewModel()
     }
 
     @AssistedFactory

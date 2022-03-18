@@ -21,10 +21,14 @@ import de.rki.coronawarnapp.NavGraphDirections
 import de.rki.coronawarnapp.R
 import de.rki.coronawarnapp.bugreporting.ui.toErrorDialogBuilder
 import de.rki.coronawarnapp.contactdiary.ui.overview.ContactDiaryOverviewFragmentDirections
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandlerEvent
+import de.rki.coronawarnapp.coronatest.qrcode.handler.RestoreCoronaTestConfirmationDialog
+import de.rki.coronawarnapp.coronatest.type.CoronaTest
 import de.rki.coronawarnapp.databinding.ActivityMainBinding
 import de.rki.coronawarnapp.datadonation.analytics.worker.DataDonationAnalyticsScheduler
 import de.rki.coronawarnapp.tag
 import de.rki.coronawarnapp.ui.base.startActivitySafely
+import de.rki.coronawarnapp.ui.doNavigate
 import de.rki.coronawarnapp.ui.main.home.MainActivityEvent
 import de.rki.coronawarnapp.ui.presencetracing.attendee.checkins.CheckInsFragment
 import de.rki.coronawarnapp.ui.setupWithNavController2
@@ -171,6 +175,10 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
             }
         }
 
+        viewModel.coronaTestQrEvent.observe(this) {
+            handleCoronaTestQRCodeHandlerEvent(event = it)
+        }
+
         if (savedInstanceState == null) {
             processExtraParameters()
         }
@@ -203,33 +211,40 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         val nestedGraph = navController.findNestedGraph(R.id.contact_diary_nav_graph)
 
         if (viewModel.isContactDiaryOnboardingDone.value == true) {
-            nestedGraph.setStartDestination(R.id.contactDiaryOverviewFragment)
+            nestedGraph.startDestination = R.id.contactDiaryOverviewFragment
             navController.navigate(
                 ContactDiaryOverviewFragmentDirections.actionContactDiaryOverviewFragmentToContactDiaryDayFragment(
                     selectedDay = LocalDate().toString()
                 )
             )
         } else {
-            nestedGraph.setStartDestination(R.id.contactDiaryOnboardingFragment)
+            nestedGraph.startDestination = R.id.contactDiaryOnboardingFragment
             navController.navigate("coronawarnapp://contact-journal/oboarding/?goToDay=true".toUri())
         }
     }
 
     private fun startContactDiaryNestedGraphDestination(navController: NavController, isOnboardingDone: Boolean) {
-        val startDestination =
-            if (isOnboardingDone) R.id.contactDiaryOverviewFragment else R.id.contactDiaryOnboardingFragment
-        navController.findNestedGraph(R.id.contact_diary_nav_graph).setStartDestination(startDestination)
+        navController.findNestedGraph(R.id.contact_diary_nav_graph).startDestination = if (isOnboardingDone) {
+            R.id.contactDiaryOverviewFragment
+        } else {
+            R.id.contactDiaryOnboardingFragment
+        }
     }
 
     private fun startTraceLocationNestedGraphDestination(navController: NavController, isOnboardingDone: Boolean) {
-        val startDestination = if (isOnboardingDone) R.id.checkInsFragment else R.id.checkInOnboardingFragment
-        navController.findNestedGraph(R.id.trace_location_attendee_nav_graph).setStartDestination(startDestination)
+        navController.findNestedGraph(R.id.trace_location_attendee_nav_graph).startDestination = if (isOnboardingDone) {
+            R.id.checkInsFragment
+        } else {
+            R.id.checkInOnboardingFragment
+        }
     }
 
     private fun startCertificatesNestedGraphDestination(navController: NavController, isConsentGiven: Boolean) {
-        val startDestination =
-            if (isConsentGiven) R.id.personOverviewFragment else R.id.covidCertificateOnboardingFragment
-        navController.findNestedGraph(R.id.covid_certificates_graph).setStartDestination(startDestination)
+        navController.findNestedGraph(R.id.covid_certificates_graph).startDestination = if (isConsentGiven) {
+            R.id.personOverviewFragment
+        } else {
+            R.id.covidCertificateOnboardingFragment
+        }
     }
 
     private fun navigateByIntentUri(intent: Intent?) {
@@ -328,5 +343,45 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
             resultCode,
             data
         )
+    }
+
+    private fun handleCoronaTestQRCodeHandlerEvent(event: CoronaTestQRCodeHandlerEvent) = when (event) {
+        is CoronaTestQRCodeHandlerEvent.DuplicateTest -> NavGraphDirections.actionToSubmissionDeletionWarningFragment(
+            event.coronaTestQRCode
+        )
+        is CoronaTestQRCodeHandlerEvent.InRecycleBin -> {
+            showRestoreCoronaTestConfirmation(recycledCoronaTest = event.recycledCoronaTest)
+            null
+        }
+        is CoronaTestQRCodeHandlerEvent.NeedsConsent -> NavGraphDirections.actionSubmissionConsentFragment(event.coronaTestQRCode)
+        is CoronaTestQRCodeHandlerEvent.RestoreDuplicateTest -> NavGraphDirections.actionToSubmissionDeletionWarningFragment(
+            event.restoreRecycledTestRequest
+        )
+        is CoronaTestQRCodeHandlerEvent.TestInvalid -> NavGraphDirections.actionGlobalSubmissionTestResultInvalidFragment(
+            testType = event.test.type,
+            testIdentifier = event.test.identifier
+        )
+        is CoronaTestQRCodeHandlerEvent.TestNegative -> NavGraphDirections.actionGlobalSubmissionTestResultNegativeFragment(
+            testType = event.test.type,
+            testIdentifier = event.test.identifier
+        )
+        is CoronaTestQRCodeHandlerEvent.TestPending -> NavGraphDirections.actionSubmissionTestResultPendingFragment(
+            testType = event.test.type,
+            testIdentifier = event.test.identifier,
+            forceTestResultUpdate = true
+        )
+        is CoronaTestQRCodeHandlerEvent.TestPositive -> NavGraphDirections.actionGlobalSubmissionTestResultKeysSharedFragment(
+            testType = event.test.type,
+            testIdentifier = event.test.identifier
+        )
+        is CoronaTestQRCodeHandlerEvent.WarnOthers -> NavGraphDirections.actionGlobalSubmissionResultPositiveOtherWarningNoConsentFragment(
+            testType = event.test.type
+        )
+    }?.let { navController.doNavigate(it) }
+
+    private fun showRestoreCoronaTestConfirmation(recycledCoronaTest: CoronaTest) {
+        RestoreCoronaTestConfirmationDialog.showDialog(context = this) {
+            viewModel.restoreCoronaTest(recycledCoronaTest = recycledCoronaTest)
+        }
     }
 }
