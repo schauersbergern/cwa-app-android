@@ -3,6 +3,7 @@ package de.rki.coronawarnapp.main
 import de.rki.coronawarnapp.contactdiary.ui.ContactDiarySettings
 import de.rki.coronawarnapp.contactdiary.util.getLocale
 import de.rki.coronawarnapp.coronatest.CoronaTestRepository
+import de.rki.coronawarnapp.coronatest.qrcode.handler.CoronaTestQRCodeHandler
 import de.rki.coronawarnapp.coronatest.qrcode.rapid.RapidAntigenQrCodeExtractor
 import de.rki.coronawarnapp.coronatest.qrcode.rapid.RapidPcrQrCodeExtractor
 import de.rki.coronawarnapp.covidcertificate.person.core.PersonCertificatesProvider
@@ -14,7 +15,6 @@ import de.rki.coronawarnapp.presencetracing.TraceLocationSettings
 import de.rki.coronawarnapp.presencetracing.checkins.CheckInRepository
 import de.rki.coronawarnapp.storage.OnboardingSettings
 import de.rki.coronawarnapp.storage.TracingSettings
-import de.rki.coronawarnapp.submission.SubmissionRepository
 import de.rki.coronawarnapp.ui.main.MainActivityViewModel
 import de.rki.coronawarnapp.util.CWADebug
 import de.rki.coronawarnapp.util.device.BackgroundModeStatus
@@ -29,6 +29,7 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.verify
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -54,10 +55,10 @@ class MainActivityViewModelTest : BaseTest() {
     @MockK lateinit var checkInRepository: CheckInRepository
     @MockK lateinit var covidCertificateSettings: CovidCertificateSettings
     @MockK lateinit var personCertificatesProvider: PersonCertificatesProvider
-    @MockK lateinit var submissionRepository: SubmissionRepository
     @MockK lateinit var coronTestRepository: CoronaTestRepository
     @MockK lateinit var valueSetsRepository: ValueSetsRepository
     @MockK lateinit var tracingSettings: TracingSettings
+    @MockK lateinit var coronaTestQRCodeHandler: CoronaTestQRCodeHandler
 
     private val raExtractor = spyk(RapidAntigenQrCodeExtractor())
     private val rPcrExtractor = spyk(RapidPcrQrCodeExtractor())
@@ -77,7 +78,6 @@ class MainActivityViewModelTest : BaseTest() {
         )
         every { onboardingSettings.isBackgroundCheckDone } returns true
         every { checkInRepository.checkInsWithinRetention } returns MutableStateFlow(listOf())
-        every { submissionRepository.testForType(any()) } returns flowOf()
         every { coronTestRepository.coronaTests } returns flowOf()
         every { valueSetsRepository.context } returns mockk()
         every { valueSetsRepository.context.getLocale() } returns Locale.GERMAN
@@ -89,6 +89,8 @@ class MainActivityViewModelTest : BaseTest() {
         }
 
         every { tracingSettings.showRiskLevelBadge } returns mockFlowPreference(false)
+
+        every { coronaTestQRCodeHandler.event } returns MutableSharedFlow()
     }
 
     private fun createInstance(): MainActivityViewModel = MainActivityViewModel(
@@ -104,10 +106,10 @@ class MainActivityViewModelTest : BaseTest() {
         personCertificatesProvider = personCertificatesProvider,
         raExtractor = raExtractor,
         rPcrExtractor = rPcrExtractor,
-        submissionRepository = submissionRepository,
         coronaTestRepository = coronTestRepository,
         valueSetRepository = valueSetsRepository,
         tracingSettings = tracingSettings,
+        coronaTestQRCodeHandler = coronaTestQRCodeHandler
     )
 
     @Test
