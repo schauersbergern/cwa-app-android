@@ -13,12 +13,12 @@ import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import javax.inject.Inject
 
-class CoronaTestQRCodeCoordinator @Inject constructor(
+class CoronaTestQRCodeHandler @Inject constructor(
     private val recycledCoronaTestsProvider: RecycledCoronaTestsProvider,
     private val submissionRepository: SubmissionRepository
 ) {
 
-    private val mutableEvent = MutableSharedFlow<CoronaTestQRCodeCoordinatorEvent>(extraBufferCapacity = 1)
+    private val mutableEvent = MutableSharedFlow<CoronaTestQRCodeHandlerEvent>(extraBufferCapacity = 1)
     val event = mutableEvent.asSharedFlow()
 
     suspend fun handle(coronaTestQRCode: CoronaTestQRCode) {
@@ -27,9 +27,9 @@ class CoronaTestQRCodeCoordinator @Inject constructor(
         val existingTest by lazy { submissionRepository.testForType(coronaTestQRCode.type) }
 
         when {
-            recycledCoronaTest != null -> CoronaTestQRCodeCoordinatorEvent.InRecycleBin(recycledCoronaTest)
-            existingTest.first() != null -> CoronaTestQRCodeCoordinatorEvent.DuplicateTest(coronaTestQRCode)
-            else -> CoronaTestQRCodeCoordinatorEvent.NeedsConsent(coronaTestQRCode)
+            recycledCoronaTest != null -> CoronaTestQRCodeHandlerEvent.InRecycleBin(recycledCoronaTest)
+            existingTest.first() != null -> CoronaTestQRCodeHandlerEvent.DuplicateTest(coronaTestQRCode)
+            else -> CoronaTestQRCodeHandlerEvent.NeedsConsent(coronaTestQRCode)
         }.also { emit(event = it) }
     }
 
@@ -37,7 +37,7 @@ class CoronaTestQRCodeCoordinator @Inject constructor(
         Timber.tag(TAG).d("restoreCoronaTest(recycledCoronaTest%s)", recycledCoronaTest::class.java.simpleName)
         val currentCoronaTest = submissionRepository.testForType(recycledCoronaTest.type).first()
         when {
-            currentCoronaTest != null -> CoronaTestQRCodeCoordinatorEvent.RestoreDuplicateTest(
+            currentCoronaTest != null -> CoronaTestQRCodeHandlerEvent.RestoreDuplicateTest(
                 recycledCoronaTest.toRestoreRecycledTestRequest()
             )
 
@@ -48,22 +48,22 @@ class CoronaTestQRCodeCoordinator @Inject constructor(
         }.also { emit(it) }
     }
 
-    private fun CoronaTest.toCoronaTestQRCodeCoordinatorEvent(): CoronaTestQRCodeCoordinatorEvent = when {
-        isPending -> CoronaTestQRCodeCoordinatorEvent.TestPending(test = this)
-        isNegative -> CoronaTestQRCodeCoordinatorEvent.TestNegative(test = this)
+    private fun CoronaTest.toCoronaTestQRCodeCoordinatorEvent(): CoronaTestQRCodeHandlerEvent = when {
+        isPending -> CoronaTestQRCodeHandlerEvent.TestPending(test = this)
+        isNegative -> CoronaTestQRCodeHandlerEvent.TestNegative(test = this)
         isPositive -> when (isAdvancedConsentGiven) {
-            true -> CoronaTestQRCodeCoordinatorEvent.TestPositive(test = this)
-            false -> CoronaTestQRCodeCoordinatorEvent.WarnOthers(test = this)
+            true -> CoronaTestQRCodeHandlerEvent.TestPositive(test = this)
+            false -> CoronaTestQRCodeHandlerEvent.WarnOthers(test = this)
         }
-        else -> CoronaTestQRCodeCoordinatorEvent.TestInvalid(test = this)
+        else -> CoronaTestQRCodeHandlerEvent.TestInvalid(test = this)
     }
 
-    private suspend fun emit(event: CoronaTestQRCodeCoordinatorEvent) {
+    private suspend fun emit(event: CoronaTestQRCodeHandlerEvent) {
         Timber.tag(TAG).d("emit(event=%s)", event::class.java.simpleName)
         mutableEvent.emit(event)
     }
 
     companion object {
-        private val TAG = tag<CoronaTestQRCodeCoordinator>()
+        private val TAG = tag<CoronaTestQRCodeHandler>()
     }
 }
